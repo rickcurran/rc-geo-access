@@ -36,7 +36,7 @@ function wos_geo_func() {
         "<br><br>Error Code: AXS{$geoplugin->countryCode}001 <br>\n");        
     }
     
-    
+    // Added 2 Digit Country Code array for potential use in a whitelisting UI
     $countries = array(
         'AF' => 'Afghanistan',
         'AX' => 'Aland Islands',
