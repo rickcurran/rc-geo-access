@@ -1,22 +1,25 @@
 <?php
 /*
-Plugin Name: WOS Geo Access
-Plugin URI: http://wideopenspace.co.uk
-Description: Geolocation
+Plugin Name: RC Geo Access
+Plugin URI: http://suburbia.org.uk/projects/#rcgeoaccess
+Description: This plugin restricts access to the Login page via geolocation lookup of visitor's IP addresses.
 Version: 1.0
-Author: wideopenspace ltd
-Author URI: http://wideopenspace.co.uk
+Author: Rick Curran
+Author URI: http://suburbia.org.uk
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
 
-add_action('login_init', 'wos_geo_func');
-function wos_geo_func() {
+add_action('login_init', 'rc_geo_func');
+function rc_geo_func() {
     require_once('geoplugin.class.php');
     $geoplugin = new geoPlugin();
     $geoplugin->locate();
     $countrycode_array = array('GB');
     $countrycode = $geoplugin->countryCode;
-    if (!in_array($countrycode, $countrycode_array)) {
-        $to = 'rick@wideopenspace.co.uk';
+    
+    if ( ! in_array( $countrycode, $countrycode_array ) ) {
+        $to = 'rickcurran@gmail.com';
         $subject = "WP Login restricted: " . get_bloginfo('name') . " - {$geoplugin->countryCode}";
         $body = "WP Login access restriction was triggered for: " . get_bloginfo('name') . " - " . site_url() . " <br><br>The geolocation data for the user was:<br> {$geoplugin->ip} <br />\n".
             "City: {$geoplugin->city} <br />\n".
