@@ -1,0 +1,14 @@
+# Changelog 
+
+
+## 1.1
+
+- Added support for IPStack API as the sole geolocation provider
+- Added UI for saving IPStack API Key
+- Added UI for enabling / disabling restriction
+- Added UI for setting restricted countries
+- Added warning when no countries have been set to strongly encourage user to add their current location to try and prevent them being locked out of the Admin(!)
+
+## 1
+
+- Initial plugin build.
