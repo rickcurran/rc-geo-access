@@ -48,6 +48,10 @@ The plugin uses an API from IPStack.com to look up the user's location based on 
 
 No, at this time it is only available through the APIStack API.
 
+= How do I configure the plugin settings? =
+
+You can configure all of the plugin settings from the "RC Geo Access" menu found in the "Settings" menu in your WordPress admin.
+
 = Help! I've enabled this plugin and now I'm locked out of my site! =
 
 Yikes, sorry! There is a potential danger of this happening if you have enabled the restriction (including the required API key) but you did not set your own country location to be accessible. If this happens then I'm afraid the only option here is to connect to your site directly via a SFTP / FTP and remove the plugin files from your site. Once removed you will then be able to login, you can then re-install the plugin, you should then immediately go and ensure that your current country location is given access in the "RC Geo Access" page in the Settings menu in your WordPress Admin.
@@ -55,10 +59,8 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 
 == Changelog ==
 
-= 1.1 =
+= 1.2 =
 
-- Added support for IPStack API as the sole geolocation provider
-- Added UI for saving IPStack API Key
-- Added UI for enabling / disabling restriction
-- Added UI for setting restricted countries
-- Added warning when no countries have been set to strongly encourage user to add their current location to try and prevent them being locked out of the Admin(!)
+- Added UI for saving an email address to receive notifications
+- Added UI for enabling type of email notifications to receive
+- Added various error handling and notifications in the admin, in particular to notify if the API request limit has been reached.

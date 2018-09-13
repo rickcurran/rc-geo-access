@@ -2,8 +2,8 @@
 /*
 Plugin Name: RC Geo Access
 Plugin URI: http://suburbia.org.uk/projects/#rcgeoaccess
-Description: This plugin restricts access to the Login page via geolocation lookup of visitor's IP addresses.
-Version: 1.1
+Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
+Version: 1.2
 Author: Rick Curran
 Author URI: http://suburbia.org.uk
 License: GPLv2 or later
@@ -13,7 +13,9 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 add_action( 'admin_menu', 'rc_geo_access_add_admin_menu' );
 add_action( 'admin_init', 'rc_geo_access_settings_init' );
 
-// Add Menu Page under Settings
+/*
+ * Add Menu Page under Settings
+ */
 function rc_geo_access_add_admin_menu() {
     
 	add_options_page( 'RC GEO Access', 'RC GEO Access', 'manage_options', 'rc_geo_access', 'rc_geo_access_options_page' );
@@ -23,65 +25,119 @@ function rc_geo_access_add_admin_menu() {
 /*
  * Settings Page Render / Storing...
  */
-function rc_geo_access_settings_init(  ) { 
+function rc_geo_access_settings_init() { 
 
 	register_setting( 'rc_geo_access_admin_page', 'rc_geo_access_settings' );
 
-	add_settings_section( 'rc_geo_access_admin_page_section',  __( 'What does this plugin do?', 'wordpress' ),  'rc_geo_access_settings_section_callback', 'rc_geo_access_admin_page' );
+	add_settings_section( 'rc_geo_access_admin_page_section',  __( 'What does this plugin do?', 'rc_geo_access_plugin' ),  'rc_geo_access_settings_section_callback', 'rc_geo_access_admin_page' );
 
-	add_settings_field( 'rc_geo_access_status', __( 'Restriction Status:', 'wordpress' ), 'rc_geo_access_status_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+	add_settings_field( 'rc_geo_access_status', __( 'Restriction Status:', 'rc_geo_access_plugin' ), 'rc_geo_access_status_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
 
-    add_settings_field( 'rc_geo_access_ipstack_api_key', __( 'IPStack API Key:', 'wordpress' ), 'rc_geo_access_ipstack_api_key_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+    add_settings_field( 'rc_geo_access_ipstack_api_key', __( 'IPStack API Key:', 'rc_geo_access_plugin' ), 'rc_geo_access_ipstack_api_key_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
 
-	add_settings_field( 'rc_geo_access_restricted_countries', __( 'Restrict Countries:', 'wordpress' ), 'rc_geo_access_restricted_countries_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+	add_settings_field( 'rc_geo_access_restricted_countries', __( 'Country Whitelist:', 'rc_geo_access_plugin' ), 'rc_geo_access_restricted_countries_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+            
+    add_settings_section( 'rc_geo_access_admin_page_notifications_section', 'Email Notifications', 'rc_geo_access_settings_notifications_section_callback', 'rc_geo_access_admin_page' );
+    
+    add_settings_field( 'rc_geo_access_email_recipient', __( 'Email Recipient:', 'rc_geo_access_plugin' ), 'rc_geo_access_email_recipient_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_notifications_section' );
+    
+    add_settings_field( 'rc_geo_access_email_notification_type', __( 'Notification Type:', 'rc_geo_access_plugin' ), 'rc_geo_access_email_notification_type_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_notifications_section' );
     
     add_settings_section( 'rc_geo_access_admin_page_save_section', '', 'rc_geo_access_settings_save_section_callback', 'rc_geo_access_admin_page' );
+
     
-    add_settings_section( 'rc_geo_access_admin_page_donate_section', __( 'Support this plugin', 'wordpress' ), 'rc_geo_access_settings_donate_section_callback', 'rc_geo_access_admin_page' );
+    add_settings_section( 'rc_geo_access_admin_page_donate_section', __( 'Support this plugin', 'rc_geo_access_plugin' ), 'rc_geo_access_settings_donate_section_callback', 'rc_geo_access_admin_page' );
 
     
 
 }
 
-function rc_geo_access_status_render(  ) { 
+function rc_geo_access_email_recipient_render() { 
 
 	$options = get_option( 'rc_geo_access_settings' );
     
 	?>
-	<select name='rc_geo_access_settings[rc_geo_access_status]'>
-		<option value='disabled' <?php selected( $options['rc_geo_access_status'], 'disabled' ); ?>>Disabled</option>
-		<option value='enabled' <?php selected( $options['rc_geo_access_status'], 'enabled' ); ?>>Enabled</option>
-	</select>
+	<input type='text' name='rc_geo_access_settings[rc_geo_access_email_recipient]' value='<?php echo $options[ 'rc_geo_access_email_recipient' ]; ?>' size="50">
 
 <?php
-    if ( $options['rc_geo_access_status'] === 'disabled' ) {
+    if ( $options[ 'rc_geo_access_email_recipient' ] === '' ) {
         
-        echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Change this to "enabled" to begin access restriction', 'wordpress' ) . '</span>';
+        echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Please enter a valid email address to receive notifications.', 'rc_geo_access_plugin' ) . '</span>';
         
     }
 
 }
 
-function rc_geo_access_ipstack_api_key_render(  ) { 
+function rc_geo_access_email_notification_type_render() { 
 
 	$options = get_option( 'rc_geo_access_settings' );
     
 	?>
-	<input type='text' name='rc_geo_access_settings[rc_geo_access_ipstack_api_key]' value='<?php echo $options['rc_geo_access_ipstack_api_key']; ?>' size="50">
-	<?php
-        if ( $options['rc_geo_access_ipstack_api_key'] === '' ) {
-            
-            echo '<span style="color:darkorange;font-weight:bold;">&larr;' . __( 'Please enter an API Key', 'wordpress' ) . '</span>';
-            
-        }
+	<select name='rc_geo_access_settings[rc_geo_access_email_notification_type]'>
+		<option value='restrictions_and_errors' <?php selected( $options[ 'rc_geo_access_email_notification_type' ], 'restrictions_and_errors' ); ?>>Restrictions and Errors</option>
+		<option value='errors_only' <?php selected( $options[ 'rc_geo_access_email_notification_type' ], 'errors_only' ); ?>>Errors Only</option>
+	</select>
+
+<?php
+
 }
 
 
-function rc_geo_access_restricted_countries_render(  ) { 
+function rc_geo_access_status_render() { 
 
 	$options = get_option( 'rc_geo_access_settings' );
     
-    $rc_geo_access_restricted_countries = maybe_unserialize( $options['rc_geo_access_restricted_countries'] );
+	?>
+	<select name='rc_geo_access_settings[rc_geo_access_status]'>
+		<option value='disabled' <?php selected( $options[ 'rc_geo_access_status' ], 'disabled' ); ?>>Disabled</option>
+		<option value='enabled' <?php selected( $options[ 'rc_geo_access_status' ], 'enabled' ); ?>>Enabled</option>
+	</select>
+
+<?php
+    if ( $options[ 'rc_geo_access_status' ] === 'disabled' ) {
+        
+        echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Change this to "Enabled" to turn on access restriction', 'rc_geo_access_plugin' ) . '</span>';
+        
+    }
+
+}
+
+function rc_geo_access_ipstack_api_key_render() { 
+
+	$options = get_option( 'rc_geo_access_settings' );
+    
+	?>
+	<input type='text' name='rc_geo_access_settings[rc_geo_access_ipstack_api_key]' value='<?php echo $options[ 'rc_geo_access_ipstack_api_key' ]; ?>' size="50">
+	<?php
+        if ( $options[ 'rc_geo_access_ipstack_api_key' ] === '' ) {
+            
+            echo '<span style="color:darkorange;font-weight:bold;">&larr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</span>';
+            
+        }
+    
+        // Check if API Key has any errors...
+        if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] !== '' ) {
+            
+            // Lookup current admin user's location...
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipstack_api_key' ] );
+            // ...and then check response for any errors relating to the API key...
+            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result );
+
+            if ( $rc_geo_access_error_status !== '' ) { // If errors then display message...
+                echo '<span style="color:darkorange;font-weight:bold;">&larr;' . $rc_geo_access_error_status . '</span>';
+            }
+            
+        }
+    
+    
+}
+
+
+function rc_geo_access_restricted_countries_render() { 
+
+	$options = get_option( 'rc_geo_access_settings' );
+    
+    $rc_geo_access_restricted_countries = maybe_unserialize( $options[ 'rc_geo_access_restricted_countries' ] );
     
     $rc_geo_access_countries = rc_geo_access_get_countries();
     
@@ -89,18 +145,18 @@ function rc_geo_access_restricted_countries_render(  ) {
     
     if ( count( $rc_geo_access_countries ) !== 0 ) {
         
-        echo '<p><strong>' . __( 'Initially all countries are blocked from accessing the login page, check the boxes below for the countries that you want to allow access to your login page:', 'wordpress' ) . '</strong></p>';
+        echo '<p><strong>' . __( 'Initially all countries are blocked from accessing the login page, check the boxes below for the countries that you want to allow to access your login page:', 'rc_geo_access_plugin' ) . '</strong></p>';
         
         // Warn user if no countries have access and restriction is enabled...
-        if ( count( $rc_geo_access_restricted_countries ) === 0 && $options['rc_geo_access_status'] === 'enabled' && $options['rc_geo_access_ipstack_api_key'] !== '' ) {
+        if ( count( $rc_geo_access_restricted_countries ) === 0 && $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] !== '' ) {
             
             // Lookup current admin user's location and suggest they enable access to this or risk being locked out!!!
-            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options['rc_geo_access_ipstack_api_key'] );
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipstack_api_key' ] );
             
             echo '<p style="border:3px solid red;padding:10px;margin-top:20px;margin-bottom:20px;background-color:#fff;color:red;font-weight:bold;">&darr; ';
-            echo __( 'WARNING: All Countries are currently blocked from accessing your login page! To try and prevent you from being locked out of your site your current location of ', 'wordpress' );
+            echo __( 'WARNING: All Countries are currently blocked from accessing your login page! To try and prevent you from being locked out of your site your current location of ', 'rc_geo_access_plugin' );
             echo '"' . $rc_geo_access_api_result[ 'country_name' ] . ' - ' . $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_code' ] . '"';
-            echo __( ' has been added below, please add any other countries you wish to allow access and then click "Save Changes" to confirm these settings. You are at risk being locked out of your site if you have no countries set here!', 'wordpress' );
+            echo __( ' has been added below, please add any other countries you wish to allow access and then click "Save Changes" to confirm these settings. THERE IS A HIGH RISK OF BEING LOCKED OUT OF YOUR SITE IF YOU HAVE NO COUNTRIES SET HERE!', 'rc_geo_access_plugin' );
             echo '</p>';
             
             $rc_geo_access_no_countries_forced_country_code = $rc_geo_access_api_result[ 'country_code' ];
@@ -130,9 +186,9 @@ function rc_geo_access_restricted_countries_render(  ) {
 
 }
 
-function rc_geo_access_settings_section_callback(  ) { 
+function rc_geo_access_settings_section_callback() { 
 
-	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'wordpress' );
+	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
     
     submit_button();
 
@@ -140,20 +196,26 @@ function rc_geo_access_settings_section_callback(  ) {
 
 function rc_geo_access_settings_save_section_callback( $arg ) {
 	
-   submit_button();
+    submit_button();
     
     echo '<hr>';
     
 }
 
-function rc_geo_access_settings_donate_section_callback( $arg ) {
-	
-    echo __( '<p><strong>If you have found this plugin to be useful then please consider a donation. Donations like these help to provide time for <strong><a href="https://suburbia.org.uk/about">me</a></strong> to develop plugins like this.</strong></p>', 'wordpress' );
-    echo __( '<p><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G" class="button button-primary" target="_blank">Donate</a></p>', 'wordpress' );
+function rc_geo_access_settings_notifications_section_callback( $arg ) {
+    
+    echo __( '<p>Email notifications can be sent whenever access to the login page is restricted, these can be useful to help understand how frequently login attempts are made. Additionally if there are any error messages relating to use of the geolocation API then email notifications will be sent out with details of the error to allow you to troubleshoot and resolve the issue. The plugin will work without this email address field completed but there will be a risk of missing important error notifications.</p><p>Please enter an email address in the field below to receive these notifications. You can select an option from the "Notification Type" dropdown to your preferred setting, the default "Restrictions and Errors" will receive all messages or "Errors Only" will receive only critical error messages. This latter option can be useful if your site experiences frequent access attempts as this can lead to a high volume of email notifications(!).</p>', 'rc_geo_access_plugin' );
     
 }
 
-function rc_geo_access_options_page(  ) { 
+function rc_geo_access_settings_donate_section_callback( $arg ) {
+	
+    echo __( '<p><strong>If you have found this plugin to be useful then please consider a donation. Donations like these help to provide time for <strong><a href="https://suburbia.org.uk/about">me</a></strong> to develop plugins like this.</strong></p>', 'rc_geo_access_plugin' );
+    echo __( '<p><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G" class="button button-primary" target="_blank">Donate</a></p>', 'rc_geo_access_plugin' );
+    
+}
+
+function rc_geo_access_options_page() { 
 
 	?>
     <div class="wrap">
@@ -181,9 +243,9 @@ add_filter( 'plugin_row_meta', 'rc_geo_access_row_meta', 10, 4 );
 
 function rc_geo_access_row_meta( $links_array, $plugin_file_name, $plugin_data, $status ) {
     
-    if ( strpos( $plugin_file_name, basename(__FILE__) ) ) {
-        $links_array[] = '<a href="options-general.php?page=rc_geo_access">' . __('Settings','rc_geo_access_page') . '</a>';
-        $links_array[] = '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">'.__('Donate', 'rc_geo_access_page').'</a>';
+    if ( strpos( $plugin_file_name, basename( __FILE__ ) ) ) {
+        $links_array[] = '<a href="options-general.php?page=rc_geo_access">' . __( 'Settings','rc_geo_access_plugin' ) . '</a>';
+        $links_array[] = '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">' . __( 'Donate', 'rc_geo_access_plugin' ) . '</a>';
     }
     return $links_array;
     
@@ -191,53 +253,139 @@ function rc_geo_access_row_meta( $links_array, $plugin_file_name, $plugin_data, 
 
 
 /*
- * Restriction lookup function
+ * Restriction checked on login_init
  */
 add_action( 'login_init', 'rc_geo_access_func' );
 
 function rc_geo_access_func() {
     
     $options = get_option( 'rc_geo_access_settings' );
-    $rc_geo_status = $options['rc_geo_access_status'];
-    $rc_geo_access_key = $options['rc_geo_access_ipstack_api_key'];
+    $rc_geo_status = $options[ 'rc_geo_access_status' ];
+    $rc_geo_access_key = $options[ 'rc_geo_access_ipstack_api_key' ];
     
-    if ($rc_geo_status === 'enabled' && $rc_geo_access_key !== '') { // Check that Restriction is enabled and API Key is not empty...
+    if ( $rc_geo_status === 'enabled' && $rc_geo_access_key !== '' ) { // Check that Restriction is enabled and API Key is not empty...
         
-        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $rc_geo_access_key );
-
-        // Output the 2 letter "country_code" and other details...
-        $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
-        $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
-        $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
-        $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
+        $ip = $_SERVER[ 'REMOTE_ADDR' ];
         
-        // Get list of enabled countries...
-        $rc_geo_access_restricted_countries = maybe_unserialize( $options['rc_geo_access_restricted_countries'] );
+        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $ip , $rc_geo_access_key );
 
-        if ( ! in_array( $rc_geo_access_country_code, $rc_geo_access_restricted_countries ) ) {
-            $to = 'rickcurran@gmail.com';
-            $subject = 'WP Login restricted: ' . get_bloginfo( 'name' ) . ' - ' . $rc_geo_access_country_code;
-            $body = 'WP Login access restriction was triggered for: ' . get_bloginfo( 'name' ) . ' - ' . site_url() . ' <br><br>The geolocation data for the user was: <br> ' . $ip . '<br />' . PHP_EOL .
-                'Country Name: ' . $rc_geo_access_country_name . '<br />' . PHP_EOL .
-                'Country Code: ' . $rc_geo_access_country_code . '<br />' . PHP_EOL .
-                'Longitude: ' . $rc_geo_access_longitude . '<br />' . PHP_EOL .
-                'Latitude: ' . $rc_geo_access_latitude . '<br />' . PHP_EOL;
-                if ( isset( $_SERVER[ 'HTTP_REFERER' ] ) ) {
-                    $body .= 'Referrer: ' . $_SERVER[ 'HTTP_REFERER' ] . '<br />' . PHP_EOL;
+        // Check for API errors etc...
+        $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result );
+                
+        if ( $rc_geo_access_error_status === '' ) { // If there are no errors then proceed with restriction...
+            
+            // Output the 2 letter "country_code" and other details...
+            $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+            $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
+            $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
+            $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
+
+            // Get list of enabled countries...
+            $rc_geo_access_restricted_countries = maybe_unserialize( $options[ 'rc_geo_access_restricted_countries' ] );
+
+            // If the user location is not whitelisted then prevent access to the login page...
+            if ( ! in_array( $rc_geo_access_country_code, $rc_geo_access_restricted_countries ) ) {
+                /*
+                 * Send an email notification if email recipient field is completed and notifications type
+                 * is set to XXXX...
+                 */
+                if ( $options[ 'rc_geo_access_email_recipient' ] !== '' && $options[ 'rc_geo_access_email_notification_type' ] === 'restrictions_and_errors') {
+                    //$to = 'rickcurran@gmail.com';
+                    $to = $options[ 'rc_geo_access_email_recipient' ];
+                    $subject = 'Notification Message from the RC Geo Access plugin on ' . site_url();
+                    $body = '<p><b>This is a notification message from the RC Geo Access plugin on ' . site_url() . '.</b></p>' . PHP_EOL;
+                    $body .= '<p>An attempt was made to access the login page from a restricted location.</p>' . PHP_EOL;
+                    $body .= '<p>The geolocation data for the IP Address used in the access attempt was: </p>' . PHP_EOL;
+                    $body .= '<ul><li>' . $ip . '</li>' . PHP_EOL;
+                    $body .= '<li>Country Name: ' . $rc_geo_access_country_name . '</li>' . PHP_EOL;
+                    $body .= '<li>Country Code: ' . $rc_geo_access_country_code . '</li>' . PHP_EOL;
+                    $body .= '<li>Longitude: ' . $rc_geo_access_longitude . '</li>' . PHP_EOL;
+                    $body .= '<li>Latitude: ' . $rc_geo_access_latitude . '</li>' . PHP_EOL;
+                    if ( isset( $_SERVER[ 'HTTP_REFERER' ] ) ) {
+                        $body .= '<li>Referrer: ' . $_SERVER[ 'HTTP_REFERER' ] . '</li>' . PHP_EOL;
+                    }
+                    $body .= '</ul>' . PHP_EOL;
+                    $body .= '<br>' . PHP_EOL;
+                    $body .= '<p><a href="' . site_url() . '/wp-admin/options-general.php?page=rc_geo_access">' . __( 'Click here to manage RC Geo Access settings on ', 'rc_geo_access_plugin' ) . site_url() . '</a></p>' . PHP_EOL;
+                    $body .= '<br><br><hr><br><br>' . PHP_EOL;
+                    $body .= '<p><a href="https://suburbia.org.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
+                    $body .= '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">' . __( 'click here to support it with a donation', 'rc_geo_access_plugin' ) . '</a>.</p>' . PHP_EOL;
+                    $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+                    wp_mail( $to, $subject, $body, $headers );
                 }
-            $headers = array( 'Content-Type: text/html; charset=UTF-8' );
-            wp_mail( $to, $subject, $body, $headers );
-            wp_die('Sorry, an error occurred. Please contact the administrator of this website and provide the error code below to help them assist you.'.
-            '<br><br>Error Code: AXS' . $rc_geo_access_country_code . '001' . '<br>' );    
+                
+                // Block display of login page and display a message...
+                wp_die( __( 'Sorry, access to this page is not available. Please contact the administrator of this website and provide the error code below to help them assist you.'.
+                '<br><br>Error Code: RCGEOAXS' . $rc_geo_access_country_code . '001' . '<br>', 'rc_geo_access_plugin' ) );    
+            }
+            
+        } else {
+            // Errors of some kind occurred, send an email with the error message
+            /*
+             * Send an Error email notification if email recipient field is completed...
+             */
+            if ( $options[ 'rc_geo_access_email_recipient' ] !== '' ) {
+                //$to = 'rickcurran@gmail.com';
+                $to = $options[ 'rc_geo_access_email_recipient' ];
+                $subject = 'Error Message from the RC Geo Access plugin on ' . site_url();
+                $body = '<p><b>This is an error message from the RC Geo Access plugin on ' . site_url() . '.</b></p>' . PHP_EOL;
+                $body .= '<p>There is an issue that may be preventing the RC Geo Access plugin from working correctly. Please read the error message below and take action to correct the problem:</p>' . PHP_EOL;
+
+                $body .= '<p style="color:darkorange;font-weight:bold;font-size:120%;">' . $rc_geo_access_error_status . '</p>';
+
+                if ( isset( $_SERVER[ 'HTTP_REFERER' ] ) ) {
+                    $body .= '<p>Referrer: ' . $_SERVER[ 'HTTP_REFERER' ] . '</p>' . PHP_EOL;
+                }
+
+                $body .= '<br>' . PHP_EOL;
+                $body .= '<p><a href="' . site_url() . '/wp-admin/options-general.php?page=rc_geo_access">' . __( 'Click here to manage RC Geo Access settings on ', 'rc_geo_access_plugin' ) . site_url() . '</a></p>' . PHP_EOL;
+                $body .= '<br><br><hr><br><br>' . PHP_EOL;
+                $body .= '<p><a href="https://suburbia.org.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
+                $body .= '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">' . __( 'click here to support it with a donation', 'rc_geo_access_plugin' ) . '</a>.</p>' . PHP_EOL;
+                $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+                wp_mail( $to, $subject, $body, $headers );
+            }
+            
         }
-        
+
     }
     
 }
 
+/* 
+ * Check for any API errors...
+ */
+function rc_geo_access_error_handling( $rc_geo_access_api_result ) {
+    
+    $rga_error_status = '';
+        
+    // Check if request fails...
+    if ($rc_geo_access_api_result[ 'success' ] === false ) { // Failure occurred...
+        $rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
+        $rga_type = $rc_geo_access_api_result[ 'error' ][ 'type' ];
+        
+        if ( $rga_code === 101 && $rga_type === 'invalid_access_key' ) { // INVALID API KEY
+            $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
+            
+        } else if ( $rga_code === 102 ) { // INACTIVE USER
+            $rga_error_status = __( 'Sorry, the user account associated with the API Key appears to be invactive. Please check that you have an active IPStack account and enter a valid API Key.', 'rc_geo_access_plugin' );
+            
+        } else if ( $rga_code === 104 ) { // INACTIVE USER
+            $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your IPStack.com account. You will need to upgrade your account at ipstack.com to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+        }
+    }
+    
+    return $rga_error_status;
+}
 
+
+
+/*
+ * Restriction geolocation function
+ */
 function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key ) {
-    $ch = curl_init( 'https://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '' );
+    
+    $ch = curl_init( 'https://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
     curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
     $json = curl_exec( $ch );
@@ -248,8 +396,11 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key ) {
     return $rc_geo_access_api_result;
 }
 
-
+/*
+ * Get array of Country data
+ */
 function rc_geo_access_get_countries() {
+    
     // 2 Digit Country Code array
     $countries = array(
         'Afghanistan' => 'AF',

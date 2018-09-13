@@ -1,6 +1,12 @@
 # Changelog 
 
 
+## 1.2
+
+- Added UI for saving an email address to receive notifications
+- Added UI for enabling type of email notifications to receive
+- Added various error handling and notifications in the admin, in particular to notify if the API request limit has been reached.
+
 ## 1.1
 
 - Added support for IPStack API as the sole geolocation provider
