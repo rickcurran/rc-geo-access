@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: security, geolocation, login
 Requires at least: 4.6
 Tested up to: 4.9
-Stable tag: 1.1
+Stable tag: 1.41
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,13 +50,17 @@ No, at this time it is only available through the APIStack API.
 
 = Help! I've enabled this plugin and now I'm locked out of my site! =
 
-Yikes, sorry! There is a potential danger of this happening if you have enabled the restriction (including the required API key) but you did not set your own country location to be accessible. If this happens then I'm afraid the only option here is to connect to your site directly via a SFTP / FTP and remove the plugin files from your site. Once removed you will then be able to login, you can then re-install the plugin, you should then immediately go and ensure that your current country location is given access in the "RC Geo Access" page in the Settings menu in your WordPress Admin.
+Yikes, sorry! There is a potential danger of this happening if you have enabled the restriction (including the required API key) but you did not set your own country location to be accessible. The plugin tries to prevent this from happening by looking up your location and setting whitelisting this automatically, however there is still a chance that you could lock yourself out (especially if you uncheck your own country!!!). If this happens then the only option here is to connect to your site directly via a SFTP / FTP and remove the plugin files from your site. Once removed you will then be able to login, you can then re-install the plugin and reactivate it. Upon reactivation the plugin settings will be restored but the restriction status set to 'disabled' to prevent you from being locked out again. You should then immediately ensure that your current country location is given access in the "RC Geo Access" page in the Settings menu in your WordPress Admin, also don't forget to set the restriction status to 'enabled' to start limiting access to your login page again.
 
 
 == Changelog ==
 
-= 1.2 =
+= 1.41 =
 
-- Added UI for saving an email address to receive notifications
-- Added UI for enabling type of email notifications to receive
-- Added various error handling and notifications in the admin, in particular to notify if the API request limit has been reached.
+- Prevented "Settings" link from appearing in Network Plugins page on Multisite installation.
+
+= 1.4 =
+
+- Added plugin activation check to see if the plugin has been previously activated and had its restriction function enabled to prevent users from potentially being locked out of their site again.
+- Countries Whitelist now hidden until restriction function enabled and API Key set, this process improves the first-run experience when configuring the plugin.
+- Added notice in Dashboard and Plugin page to prompt user to configure the plugin via a link to the plugin settings page.
