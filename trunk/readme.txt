@@ -16,7 +16,7 @@ This plugin restricts access to the login page of your WordPress Admin based on 
 
 This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.
 To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from IPStack.com.
-Please note: an active IPStack API Key is required for this plugin to function correctly. You can register a free account at IPStack.com whuich provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
+Please note: an active IPStack API Key is required for this plugin to function correctly. You can register a free account at IPStack.com which provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
 
 == Example usage: ==
 
