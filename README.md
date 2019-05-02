@@ -3,8 +3,8 @@ Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 4.6
-Tested up to: 4.9
-Stable tag: 1.41
+Tested up to: 5.0
+Stable tag: 1.42
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,6 +54,10 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 
 
 == Changelog ==
+
+= 1.42 =
+
+- Changed IPStack API url call to use plain HTTP as free accounts don't support SSL requests. Added related error code notification.
 
 = 1.41 =
 

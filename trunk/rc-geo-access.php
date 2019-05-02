@@ -3,7 +3,7 @@
 Plugin Name: RC Geo Access
 Plugin URI: http://suburbia.org.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.41
+Version: 1.42
 Author: Rick Curran
 Author URI: http://suburbia.org.uk
 License: GPLv2 or later
@@ -446,6 +446,10 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result ) {
             
         } else if ( $rga_code === 104 ) { // INACTIVE USER
             $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your IPStack.com account. You will need to upgrade your account at ipstack.com to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+            
+        } else {
+            // Fall back to any other error codes
+            $rga_error_status = __( $rga_code . ' - ' . $rga_type );
         }
     }
     
@@ -459,7 +463,7 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result ) {
  */
 function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key ) {
     
-    $ch = curl_init( 'https://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
+    $ch = curl_init( 'http://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
     curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
     $json = curl_exec( $ch );

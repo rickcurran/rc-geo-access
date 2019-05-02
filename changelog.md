@@ -1,5 +1,9 @@
 # Changelog 
 
+## 1.42
+
+- Changed IPStack API url call to use plain HTTP as free accounts don't support SSL requests. Added related error code notification.
+
 ## 1.41
 
 - Prevented "Settings" link from appearing in Network Plugins page on Multisite installation.
