@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: RC Geo Access
-Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
+Plugin URI: http://suburbia.org.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.43
+Version: 1.42
 Author: Rick Curran
-Author URI: https://qreate.co.uk
+Author URI: http://suburbia.org.uk
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
@@ -81,7 +81,7 @@ function rc_geo_access_settings_init() {
 
 }
 
-function rc_geo_access_email_recipient_render() {
+function rc_geo_access_email_recipient_render() { 
 
 	$options = get_option( 'rc_geo_access_settings' );
     
@@ -253,7 +253,7 @@ function rc_geo_access_restricted_countries_render() {
 
 function rc_geo_access_settings_section_callback() { 
 
-	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
+	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
     
     submit_button();
 
@@ -275,7 +275,7 @@ function rc_geo_access_settings_notifications_section_callback( $arg ) {
 
 function rc_geo_access_settings_donate_section_callback( $arg ) {
 	
-    echo __( '<p><strong>If you have found this plugin to be useful then please consider a donation. Donations like these help to provide time for <strong><a href="https://qreate.co.uk/about">me</a></strong> to develop plugins like this.</strong></p>', 'rc_geo_access_plugin' );
+    echo __( '<p><strong>If you have found this plugin to be useful then please consider a donation. Donations like these help to provide time for <strong><a href="https://suburbia.org.uk/about">me</a></strong> to develop plugins like this.</strong></p>', 'rc_geo_access_plugin' );
     echo __( '<p><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G" class="button button-primary" target="_blank">Donate</a></p>', 'rc_geo_access_plugin' );
     
 }
@@ -382,7 +382,7 @@ function rc_geo_access_func() {
                     $body .= '<br>' . PHP_EOL;
                     $body .= '<p><a href="' . site_url() . '/wp-admin/options-general.php?page=rc_geo_access">' . __( 'Click here to manage RC Geo Access settings on ', 'rc_geo_access_plugin' ) . site_url() . '</a></p>' . PHP_EOL;
                     $body .= '<br><br><hr><br><br>' . PHP_EOL;
-                    $body .= '<p><a href="https://qreate.co.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
+                    $body .= '<p><a href="https://suburbia.org.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
                     $body .= '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">' . __( 'click here to support it with a donation', 'rc_geo_access_plugin' ) . '</a>.</p>' . PHP_EOL;
                     $headers = array( 'Content-Type: text/html; charset=UTF-8' );
                     wp_mail( $to, $subject, $body, $headers );
@@ -414,7 +414,7 @@ function rc_geo_access_func() {
                 $body .= '<br>' . PHP_EOL;
                 $body .= '<p><a href="' . site_url() . '/wp-admin/options-general.php?page=rc_geo_access">' . __( 'Click here to manage RC Geo Access settings on ', 'rc_geo_access_plugin' ) . site_url() . '</a></p>' . PHP_EOL;
                 $body .= '<br><br><hr><br><br>' . PHP_EOL;
-                $body .= '<p><a href="https://qreate.co.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
+                $body .= '<p><a href="https://suburbia.org.uk/projects#rcgeoaccess">RC Geo Access</a> is a WordPress plugin developed by Rick Curran, ';
                 $body .= '<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G">' . __( 'click here to support it with a donation', 'rc_geo_access_plugin' ) . '</a>.</p>' . PHP_EOL;
                 $headers = array( 'Content-Type: text/html; charset=UTF-8' );
                 wp_mail( $to, $subject, $body, $headers );

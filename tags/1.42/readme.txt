@@ -3,8 +3,8 @@ Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 4.6
-Tested up to: 5.7.2
-Stable tag: 1.43
+Tested up to: 5.5.1
+Stable tag: 1.42
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -16,7 +16,7 @@ This plugin restricts access to the login page of your WordPress Admin based on 
 
 This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.
 To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from IPStack.com.
-Please note: an active IPStack API Key is required for this plugin to function correctly. You can register a free account at IPStack.com which provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
+Please note: an active IPStack API Key is required for this plugin to function correctly. You can register a free account at IPStack.com which provides 10,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
 
 == Example usage: ==
 
@@ -46,7 +46,7 @@ The plugin uses an API from IPStack.com to look up the user's location based on 
 
 = Can I use a differ geolocation API? =
 
-No, at this time it is only available through the IPStack API.
+No, at this time it is only available through the APIStack API.
 
 = How do I configure the plugin settings? =
 
@@ -62,10 +62,6 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 
 
 == Changelog ==
-
-= 1.43 =
-
-- Minor Update to change plugin description text to clarify IPStack's free API limit which has changed to 5,000 requests per month. Also updated the url of the website for the plugin and clarify compatibility up to WordPress 5.7.2
 
 = 1.42 =
 
