@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: security, geolocation, login
 Requires at least: 4.6
 Tested up to: 5.7.2
-Stable tag: 1.43
+Stable tag: 1.44
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,6 +62,10 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 
 
 == Changelog ==
+
+= 1.44 =
+
+- Added IPStack affiliate link as a way for people to support the plugin if using a paid IPStack plan.
 
 = 1.43 =
 

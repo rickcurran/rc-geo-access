@@ -3,7 +3,7 @@
 Plugin Name: RC Geo Access
 Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.43
+Version: 1.44
 Author: Rick Curran
 Author URI: https://qreate.co.uk
 License: GPLv2 or later
@@ -253,7 +253,7 @@ function rc_geo_access_restricted_countries_render() {
 
 function rc_geo_access_settings_section_callback() { 
 
-	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
+	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts. If you do intend to use a paid plan please consider supporting this plugin by <a href="http://ipstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=rick54" target="_blank">using the following IPStack affiliate link to signup</a>.</p>', 'rc_geo_access_plugin' );
     
     submit_button();
 

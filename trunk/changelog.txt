@@ -1,5 +1,9 @@
 # Changelog 
 
+## 1.44
+
+- Added IPStack affiliate link as a way for people to support the plugin if using a paid IPStack plan.
+
 ## 1.43
 
 - Minor Update to change plugin description text to clarify IPStack's free API limit which has changed to 5,000 requests per month. Also updated the url of the website for the plugin and clarify compatibility up to WordPress 5.7.2
