@@ -1,0 +1,138 @@
+TODO:
+
+Additional API providers:
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+HostIP
+
+https://hostip.info
+API Key: No API key needed
+API url: https://api.hostip.info/get_json.php?ip=12.215.42.19&position=true
+Response example: 
+{
+    "country_name":"UNITED STATES",
+    "country_code":"US",
+    "city":"Sugar Grove, IL",
+    "latitude":"41.7696",
+    "longitude":"-88.4588",
+    "ip":"12.215.42.19"
+}
+Usage limits: Free, no API key needed, unlimited (They don't specifically say a limit but do ask that it not be abused)
+Price: Free
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+GeoLite2 Free Geolocation Data
+
+https://dev.maxmind.com/geoip/geolite2-free-geolocation-data
+API Key: Register for free API key
+API url: https://geolite.info/geoip/v2.1/country/{ip_address}
+Curl example: curl -u "646701:7KcYaoftIRMSlGGb" "https://geolite.info/geoip/v2.1/country/12.215.42.19?pretty"
+Response examples:
+INVALID KEY:
+{
+    "code": "AUTHORIZATION_INVALID",
+    "error": "Your account ID or license key could not be authenticated."
+}
+SUCCESS:
+{
+    "continent": {
+        "code": "NA",
+        "geoname_id": 6255149,
+        "names": {
+            "ru": "Северная Америка",
+            "zh-CN": "北美洲",
+            "de": "Nordamerika",
+            "en": "North America",
+            "es": "Norteamérica",
+            "fr": "Amérique du Nord",
+            "ja": "北アメリカ",
+            "pt-BR": "América do Norte"
+        }
+    },
+    "country": {
+        "iso_code": "US",
+        "geoname_id": 6252001,
+        "names": {
+            "fr": "États Unis",
+            "ja": "アメリカ",
+            "pt-BR": "EUA",
+            "ru": "США",
+            "zh-CN": "美国",
+            "de": "USA",
+            "en": "United States",
+            "es": "Estados Unidos"
+        }
+    },
+    "registered_country": {
+        "iso_code": "US",
+        "geoname_id": 6252001,
+        "names": {
+            "es": "Estados Unidos",
+            "fr": "États Unis",
+            "ja": "アメリカ",
+            "pt-BR": "EUA",
+            "ru": "США",
+            "zh-CN": "美国",
+            "de": "USA",
+            "en": "United States"
+        }
+    },
+    "traits": {
+        "ip_address": "12.215.42.19",
+        "network": "12.215.42.0/25"
+    }
+}
+
+Usage limits: 1000 requests per day on the free plan. Paid plans available for larger needs.
+Price: Free, paid plan available
+
+Note that `Authorisation` headers must be sent with the request, the username is the MaxMind account ID. The password is the MaxMind license key. Note that this might require two fields in the plugins admin page.
+Dev note: https://dev.maxmind.com/geoip/docs/web-services/requests?lang=en#geolite2-endpoints
+
+Account/User ID: 646701
+License key: 7KcYaoftIRMSlGGb
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+IP-Api
+
+https://ip-api.com
+API Key: 
+API url: http://ip-api.com/json/24.48.0.1?fields=status,message,country,countryCode,lat,lon
+Response example:
+{
+    "status": "success",
+    "country": "Canada",
+    "countryCode": "CA",
+    "lat": 45.6085,
+    "lon": -73.5493
+}
+`status` response is either "success" or "fail". `message` field only shows if the `status` response is fail, so an error would look something like this:
+{
+    "status": "fail",
+    "message": "ERROR MESSAGE HERE"
+}
+Usage limits: The endpoint is limited to 45 requests per *minute*, if you go over the limit your requests will be throttled (HTTP 429) until your rate limit window is reset. If you constantly go over the limit your IP address will be banned for 1 hour.
+Price: Free for non-commercial use, no API key required
+Note: Free for non-commercial use, no API key required
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+NAME
+
+https://WEBSITE
+API Key: 
+API url: 
+Response example: 
+Usage limits: 
+Price: 
+Note: 
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+Notes:
+Cloudflare offers a geolocation feature which can be used if Cloudflare is active on the website: https://support.cloudflare.com/hc/en-us/articles/200168236-What-does-CloudFlare-IP-Geolocation-do-
+Amazon Cloudfront offers something similar: https://aws.amazon.com/blogs/aws/enhanced-cloudfront-customization/

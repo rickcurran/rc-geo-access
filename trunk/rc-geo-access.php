@@ -3,7 +3,7 @@
 Plugin Name: RC Geo Access
 Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.44
+Version: 1.47
 Author: Rick Curran
 Author URI: https://qreate.co.uk
 License: GPLv2 or later
@@ -61,8 +61,12 @@ function rc_geo_access_settings_init() {
 	add_settings_section( 'rc_geo_access_admin_page_section',  __( 'What does this plugin do?', 'rc_geo_access_plugin' ),  'rc_geo_access_settings_section_callback', 'rc_geo_access_admin_page' );
 
 	add_settings_field( 'rc_geo_access_status', __( 'Restriction Status:', 'rc_geo_access_plugin' ), 'rc_geo_access_status_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+    
+	add_settings_field( 'rc_geo_access_api_provider', __( 'API Provider:', 'rc_geo_access_plugin' ), 'rc_geo_access_api_provider_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
 
     add_settings_field( 'rc_geo_access_ipstack_api_key', __( 'IPStack API Key:', 'rc_geo_access_plugin' ), 'rc_geo_access_ipstack_api_key_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+
+    add_settings_field( 'rc_geo_access_ipgeolocation_api_key', __( 'IPGeolocation API Key:', 'rc_geo_access_plugin' ), 'rc_geo_access_ipgeolocation_api_key_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
 
 	add_settings_field( 'rc_geo_access_restricted_countries', __( 'Country Whitelist:', 'rc_geo_access_plugin' ), 'rc_geo_access_restricted_countries_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
             
@@ -91,7 +95,7 @@ function rc_geo_access_email_recipient_render() {
 <?php
     if ( $options[ 'rc_geo_access_email_recipient' ] === '' ) {
         
-        echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Please enter a valid email address to receive notifications.', 'rc_geo_access_plugin' ) . '</span>';
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Please enter a valid email address to receive notifications.', 'rc_geo_access_plugin' ) . '</p>';
         
     }
     
@@ -99,7 +103,7 @@ function rc_geo_access_email_recipient_render() {
         
         if ( ! is_email( $options[ 'rc_geo_access_email_recipient' ] ) ) {
         
-            echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Sorry, that doesn\'t appear to be a valid email address, please check your typing and try again.', 'rc_geo_access_plugin' ) . ' -' . $options[ 'rc_geo_access_email_recipient' ] . '-</span>';
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Sorry, that doesn\'t appear to be a valid email address, please check your typing and try again.', 'rc_geo_access_plugin' ) . ' -' . $options[ 'rc_geo_access_email_recipient' ] . '-</p>';
             
         }
         
@@ -122,7 +126,24 @@ function rc_geo_access_email_notification_type_render() {
 }
 
 
-function rc_geo_access_status_render() { 
+function rc_geo_access_api_provider_render() { 
+
+	$options = get_option( 'rc_geo_access_settings' );
+    
+	?>
+	<select name='rc_geo_access_settings[rc_geo_access_api_provider]'>
+		<option value="">Select...</option>
+		<option value='ipgeolocation' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipgeolocation' ); ?>>ipgeolocation</option>
+		<option value='ipstack' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipstack' ); ?>>ipstack</option>
+	</select>
+
+<?php
+    if ( $options[ 'rc_geo_access_api_provider' ] == '' ) {
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Please select an API provider from the menu above.', 'rc_geo_access_plugin' ) . '</p>';
+    }
+}
+
+function rc_geo_access_status_render() {
 
 	$options = get_option( 'rc_geo_access_settings' );
     
@@ -135,39 +156,89 @@ function rc_geo_access_status_render() {
 <?php
     if ( $options[ 'rc_geo_access_status' ] === 'disabled' ) {
         
-        echo '<span style="color:darkorange;font-weight:bold;">&larr; ' . __( 'Change this to "Enabled" to turn on access restriction', 'rc_geo_access_plugin' ) . '</span>';
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Change this to "Enabled" to turn on access restriction', 'rc_geo_access_plugin' ) . '</p>';
         
     }
 
 }
 
-function rc_geo_access_ipstack_api_key_render() { 
+function rc_geo_access_ipstack_api_key_render() {
 
 	$options = get_option( 'rc_geo_access_settings' );
+    $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    $rc_geo_access_ipstack_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+    $rc_geo_access_ipgeolocation_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+    
+    $rc_geo_access_api_warn = '';
+    if ( $rc_geo_access_provider == 'ipgeolocation' && $rc_geo_access_ipstack_api_key != '' ) {
+        $rc_geo_access_api_warn = '<p style="color:darkorange;font-weight:normal;">You have selected <strong>ipgeolocation</strong> as your geolocation API provider, only enter an API key in the above <strong>ipstack</strong> API Key field if using the <strong>ipstack</strong> API.</p>';
+    }
     
 	?>
 	<input type='text' name='rc_geo_access_settings[rc_geo_access_ipstack_api_key]' value='<?php echo $options[ 'rc_geo_access_ipstack_api_key' ]; ?>' size="50">
 	<?php
-        if ( $options[ 'rc_geo_access_ipstack_api_key' ] === '' ) {
+        if ( $options[ 'rc_geo_access_ipstack_api_key' ] === '' && $options[ 'rc_geo_access_api_provider' ] === 'ipstack' ) {
             
-            echo '<span style="color:darkorange;font-weight:bold;">&larr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</span>';
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
             
         }
+    
+        echo $rc_geo_access_api_warn;
     
         // Check if API Key has any errors...
         if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] !== '' ) {
             
             // Lookup current admin user's location...
-            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipstack_api_key' ] );
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipstack_api_key' ], $options[ 'rc_geo_access_api_provider' ] );
             // ...and then check response for any errors relating to the API key...
-            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result );
+            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
 
-            if ( $rc_geo_access_error_status !== '' ) { // If errors then display message...
-                echo '<span style="color:darkorange;font-weight:bold;">&larr;' . $rc_geo_access_error_status . '</span>';
+            if ( $rc_geo_access_error_status !== '' && $rc_geo_access_provider == 'ipstack' ) { // If errors then display message...
+                echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . $rc_geo_access_error_status . '</p>';
             }
             
         }
     
+}
+
+function rc_geo_access_ipgeolocation_api_key_render() {
+
+	$options = get_option( 'rc_geo_access_settings' );
+    $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    
+    $rc_geo_access_ipstack_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+    $rc_geo_access_ipgeolocation_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+    
+    $rc_geo_access_api_warn = '';
+    if ( $rc_geo_access_provider == 'ipstack' && $rc_geo_access_ipgeolocation_api_key != '' ) {
+        $rc_geo_access_api_warn = '<p style="color:darkorange;font-weight:normal;">You have selected <strong>ipstack</strong> as your geolocation API provider, only enter an API key in the above <strong>ipgeolocation</strong> API Key field if using the <strong>ipgeolocation</strong> API.</p>';
+
+    }
+    
+	?>
+	<input type='text' name='rc_geo_access_settings[rc_geo_access_ipgeolocation_api_key]' value='<?php echo $options[ 'rc_geo_access_ipgeolocation_api_key' ]; ?>' size="50">
+	<?php
+        if ( $options[ 'rc_geo_access_ipgeolocation_api_key' ] === '' && $options[ 'rc_geo_access_api_provider' ] === 'ipgeolocation' ) {
+            
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
+            
+        }
+    
+        echo $rc_geo_access_api_warn;
+    
+        // Check if API Key has any errors...
+        if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipgeolocation_api_key' ] !== '' ) {
+            
+            // Lookup current admin user's location...
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipgeolocation_api_key' ], $options[ 'rc_geo_access_api_provider' ] );
+            // ...and then check response for any errors relating to the API key...
+            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
+
+            if ( $rc_geo_access_error_status !== '' && $rc_geo_access_provider == 'ipgeolocation' ) { // If errors then display message...
+                echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . $rc_geo_access_error_status . '</p>';
+            }
+            
+        }
     
 }
 
@@ -175,6 +246,14 @@ function rc_geo_access_ipstack_api_key_render() {
 function rc_geo_access_restricted_countries_render() { 
 
 	$options = get_option( 'rc_geo_access_settings' );
+    $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    if ( $rc_geo_access_provider == 'ipstack' ) {
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+
+    } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+    }
+    
     
     $rc_geo_access_restricted_countries = array();
     if ( isset( $options[ 'rc_geo_access_restricted_countries' ] ) ) {
@@ -185,13 +264,13 @@ function rc_geo_access_restricted_countries_render() {
     
     $rc_geo_access_no_countries_forced_country_code = '';
     
-    if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] !== '' ) {
+    if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $rc_geo_access_provider !== '' && ( $options[ 'rc_geo_access_ipstack_api_key' ] !== '' || $options[ 'rc_geo_access_ipgeolocation_api_key' ] !== '' ) ) {
         $rga_countries_whitelist_style = 'style="display:block;"';
         
     } else {
         
         $rga_countries_whitelist_style = 'style="display:none;"';
-        echo '<p style="margin-bottom:50px;">' . __( 'Set Restriction Status to "Enabled" and enter an IPStack API Key above to enable the Countries Whitelist.', 'rc_geo_access_plugin' ) . '</p>';
+        echo '<p style="margin-bottom:50px;color:darkorange;font-weight:bold;">&uarr; ' . __( 'Set Restriction Status to "Enabled", select an API provider and enter an API Key above to enable the Countries Whitelist.', 'rc_geo_access_plugin' ) . '</p>';
         
     }
         
@@ -199,26 +278,33 @@ function rc_geo_access_restricted_countries_render() {
     
     if ( count( $rc_geo_access_countries ) !== 0 ) {
 
-        echo '<p><strong>' . __( 'Initially all countries are blocked from accessing the login page, check the boxes below for the countries that you want to allow to access your login page:', 'rc_geo_access_plugin' ) . '</strong></p>';
+        echo '<p><strong>' . __( 'Initially all countries are blocked from accessing the login page, although we do try to detect your current country and enable that by default, check the boxes below for the countries that you want to allow to access your login page and make sure to include your own if it is not already checked:', 'rc_geo_access_plugin' ) . '</strong></p>';
 
         // Lookup current admin user's location, we want to ensure the current user does not get locked out of their site,
         // so we lookup their location and *always* force-check that location's checkbox to be whitelisted.
-        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_ipstack_api_key' ] );
+        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $rc_geo_access_api_key, $options[ 'rc_geo_access_api_provider' ] );        
+        
+        if ( $rc_geo_access_provider == 'ipstack' ) {
+             $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+
+        } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+             $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
+        }
+        
         $rc_geo_access_no_countries_forced_country_code = '';
-        if ( isset( $rc_geo_access_api_result[ 'country_code' ] ) ) {
-            $rc_geo_access_no_countries_forced_country_code = $rc_geo_access_api_result[ 'country_code' ];
+        if ( $rc_geo_access_country_code != '' ) {
+            $rc_geo_access_no_countries_forced_country_code = $rc_geo_access_country_code;
         }
 
         // Warn user if no countries have access and restriction is enabled...
-        if ( is_array($rc_geo_access_restricted_countries) && count( $rc_geo_access_restricted_countries ) === 0 && $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] !== '' ) {
+        if ( is_array($rc_geo_access_restricted_countries) && count( $rc_geo_access_restricted_countries ) === 0 && $options[ 'rc_geo_access_status' ] === 'enabled' && $rc_geo_access_api_key !== '' ) {
 
             echo '<p style="border:3px solid red;padding:10px;margin-top:20px;margin-bottom:20px;background-color:#fff;color:red;font-weight:bold;">&darr; ';
             echo __( 'WARNING: All Countries are currently blocked from accessing your login page! To try and prevent you from being locked out of your site your current location of ', 'rc_geo_access_plugin' );
-            echo '"' . $rc_geo_access_api_result[ 'country_name' ] . ' - ' . $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_code' ] . '"';
+            echo '"' . $rc_geo_access_api_result[ 'country_name' ] . ' - ' . $rc_geo_access_country_name = $rc_geo_access_country_code . '"';
             echo __( ' has been added below, please add any other countries you wish to allow access and then click "Save Changes" to confirm these settings. THERE IS A HIGH RISK OF BEING LOCKED OUT OF YOUR SITE IF YOU HAVE NO COUNTRIES SET HERE!', 'rc_geo_access_plugin' );
             echo '</p>';
 
-            //$rc_geo_access_no_countries_forced_country_code = $rc_geo_access_api_result[ 'country_code' ];
         }
 
 
@@ -233,7 +319,6 @@ function rc_geo_access_restricted_countries_render() {
             }
 
             // Force check user's location to be whitelisted, we're attempting to prevent the user locking themselves out of their site!
-            //if ( count( $rc_geo_access_restricted_countries ) === 0 && $rc_geo_access_no_countries_forced_country_code !== '' && $rc_geo_access_no_countries_forced_country_code === $v ) {
             if ( $rc_geo_access_no_countries_forced_country_code === $v ) {
                 $checked = ' checked';
             }
@@ -253,7 +338,14 @@ function rc_geo_access_restricted_countries_render() {
 
 function rc_geo_access_settings_section_callback() { 
 
-	echo __( '<p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p><p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from <a href="https://ipstack.com/" target="_blank">IPStack.com</a>.</p><p><strong>Please note: an active IPStack API Key is required for this plugin to function correctly.</strong> You can register a free account at <a href="https://ipstack.com/" target="_blank">IPStack.com</a> whuich provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts. If you do intend to use a paid plan please consider supporting this plugin by <a href="http://ipstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=rick54" target="_blank">using the following IPStack affiliate link to signup</a>.</p>', 'rc_geo_access_plugin' );
+	echo __( '
+    <p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p>
+    <p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using a geolocation API, currently there are two services available to use:</p>
+    <ul>
+        <li><strong>ipstack:</strong> <a href="http://ipstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=rick54" target="_blank">ipstack.com</a>.</li>
+        <li><strong>ipgeolocation:</strong> <a href="https://ipgeolocation.io/" target="_blank">ipgeolocation.io</a>.</li>
+    </ul>
+    <p><strong>Please note: an active API Key is required for either of these this services for the plugin to function correctly.</strong> You can register a free account at either of the website addresses above. Please note they offer varying amounts of location API requests for their free and paid plans, it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
     
     submit_button();
 
@@ -331,21 +423,32 @@ function rc_geo_access_func() {
     
     $options = get_option( 'rc_geo_access_settings' );
     $rc_geo_status = $options[ 'rc_geo_access_status' ];
-    $rc_geo_access_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+    $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    if ( $rc_geo_access_provider == 'ipstack' ) {
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+
+    } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+    }
     
-    if ( $rc_geo_status === 'enabled' && $rc_geo_access_key !== '' ) { // Check that Restriction is enabled and API Key is not empty...
+    if ( $rc_geo_status === 'enabled' && $rc_geo_access_provider !== '' && $rc_geo_access_api_key !== '' ) { // Check that Restriction is enabled, API provider is not empty and API Key is not empty...
         
         $ip = $_SERVER[ 'REMOTE_ADDR' ];
         
-        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $ip , $rc_geo_access_key );
+        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $ip , $rc_geo_access_api_key, $rc_geo_access_provider );
 
         // Check for API errors etc...
-        $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result );
+        $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
                 
         if ( $rc_geo_access_error_status === '' ) { // If there are no errors then proceed with restriction...
             
             // Output the 2 letter "country_code" and other details...
-            $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+            if ( $rc_geo_access_provider == 'ipstack' ) {
+                 $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+
+            } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+                 $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
+            }
             $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
             $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
             $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
@@ -429,28 +532,54 @@ function rc_geo_access_func() {
 /* 
  * Check for any API errors...
  */
-function rc_geo_access_error_handling( $rc_geo_access_api_result ) {
+function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider ) {
     
     $rga_error_status = '';
         
-    // Check if request fails...
-    if ( isset( $rc_geo_access_api_result[ 'success' ] ) && $rc_geo_access_api_result[ 'success' ] === false ) { // Failure occurred...
-        $rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
-        $rga_type = $rc_geo_access_api_result[ 'error' ][ 'type' ];
-        
-        if ( $rga_code === 101 && $rga_type === 'invalid_access_key' ) { // INVALID API KEY
-            $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
-            
-        } else if ( $rga_code === 102 ) { // INACTIVE USER
-            $rga_error_status = __( 'Sorry, the user account associated with the API Key appears to be invactive. Please check that you have an active IPStack account and enter a valid API Key.', 'rc_geo_access_plugin' );
-            
-        } else if ( $rga_code === 104 ) { // INACTIVE USER
-            $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your IPStack.com account. You will need to upgrade your account at ipstack.com to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
-            
-        } else {
-            // Fall back to any other error codes
-            $rga_error_status = __( $rga_code . ' - ' . $rga_type );
+    if ( $rc_geo_access_provider == 'ipstack' ) {
+        // Check if request to ipstack fails...
+        if ( isset( $rc_geo_access_api_result[ 'success' ] ) && $rc_geo_access_api_result[ 'success' ] === false ) { // Failure occurred...
+            $rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
+            $rga_type = $rc_geo_access_api_result[ 'error' ][ 'type' ];
+
+            if ( $rga_code === 101 && $rga_type === 'invalid_access_key' ) { // INVALID API KEY
+                $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
+                // 401 error
+
+            } else if ( $rga_code === 102 ) { // INACTIVE USER
+                $rga_error_status = __( 'Sorry, the user account associated with the API Key appears to be inactive. Please check that you have an active IPStack account and enter a valid API Key.', 'rc_geo_access_plugin' );
+                // 401 error
+
+            } else if ( $rga_code === 104 ) { // REACHED API LIMIT
+                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+                // 429 error
+
+            } else {
+                // Fall back to any other error codes
+                $rga_error_status = __( $rga_code . ' - ' . $rga_type );
+            }
         }
+        
+    } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+        // Check if request to ipgeolocation fails...
+        if ( isset( $rc_geo_access_api_result[ 'message' ] ) ) {
+            // If `message` appears in response then there is an error of some kind...
+            //$rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
+            $rga_code = $rc_geo_access_api_result[ 'message' ];
+            // INVALID API KEY
+            if ( strpos( $rga_code, 'Provided API key is not valid' ) !== false ) {
+                $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
+                
+            } else if ( strpos( $rga_code, 'Your monthly limit has been reached' ) !== false ) { // REACHED API LIMIT
+                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+                // 429 error
+
+            } else {
+                // Fall back to any other error codes
+                $rga_error_status = $rga_code;
+            }
+        }
+
     }
     
     return $rga_error_status;
@@ -461,10 +590,25 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result ) {
 /*
  * Restriction geolocation function
  */
-function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key ) {
+function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provider ) {
     
-    $ch = curl_init( 'http://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
-    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+    if ( $rc_geo_access_provider == 'ipstack' ) {
+        
+        $ch = curl_init( 'http://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        
+    } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
+        
+        $ch = curl_init( 'https://api.ipgeolocation.io/ipgeo?apiKey=' . $rc_geo_access_key . '&ip=' . $ip . '&fields=country_code2,country_name,longitude,latitude' );
+        curl_setopt( $cURL, CURLOPT_HTTPGET, true );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt($cURL, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'User-Agent: '.$_SERVER['HTTP_USER_AGENT']
+        ));
+        
+    }
 
     $json = curl_exec( $ch );
     curl_close( $ch );

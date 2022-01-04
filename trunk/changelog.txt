@@ -1,5 +1,17 @@
 # Changelog 
 
+## 1.47
+
+- Fixed first-run issue setting the default country code as active when using the ipgeolocation API due to a difference in the country code parameter naming. Tweaked position and wording of some error notification messages.
+
+## 1.46
+
+- Added initial blank "Select..." value to the `API Provider` dropdown as it would default to 'ipgeolocation' at first which would cause issues if saving without an API key set. Also added an additional check to make sure a valid API provider value is set when the actual login location check is triggered.
+
+## 1.45
+
+- Added ipgeolocation.io as an additional API provider. Plugin description text updated to provide information about this additional service. Also provided additional text to clarify that IPStack's free API limit which has been reduced to 100 requests per month and clarified compatibility up to WordPress 5.8.2.
+
 ## 1.44
 
 - Added IPStack affiliate link as a way for people to support the plugin if using a paid IPStack plan.
