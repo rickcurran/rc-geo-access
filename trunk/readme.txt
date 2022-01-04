@@ -3,9 +3,9 @@ Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 4.6
-Tested up to: 5.7.2
-Stable tag: 1.44
-Requires PHP: 5.2.4
+Tested up to: 5.8.2
+Stable tag: 1.47
+Requires PHP: 5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,12 +15,17 @@ This plugin restricts access to the login page of your WordPress Admin based on 
 == Description ==
 
 This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.
-To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using an API available from IPStack.com.
-Please note: an active IPStack API Key is required for this plugin to function correctly. You can register a free account at IPStack.com which provides 5,000 requests per month. Whilst this free plan will likely provide more than enough API requests it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
+To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using a geolocation API, currently there are two services available to use:
+
+ - IPStack: http://ipstack.com
+ - IPGeolocation: https://ipgeolocation.io
+
+Please note: an active API Key is required for either of these this services for the plugin to function correctly. You can register a free account at either of the website addresses above. Please note they offer varying amounts of location API requests for their free and paid plans, it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.
+
 
 == Example usage: ==
 
-Enable the plugin and access the "RC Geo Access" page in the Settings menu in your WordPress Admin to configure the required settings. Note: an active IPStack API Key is required for this plugin to function, you can register a free account at IPStack.com.
+Enable the plugin and access the "RC Geo Access" page in the Settings menu in your WordPress Admin to configure the required settings. Note: an active API Key is required for this plugin to function, currently there are two services available to use, you can choose from either 'IPStack' - http://ipstack.com and 'IPGeolocation' - https://ipgeolocation.io as the geolocation providers.
 
 
 == Screenshots ==
@@ -42,11 +47,11 @@ This plugin restricts access to the login page of your WordPress Admin based on 
 
 = How does this plugin get the user's location? =
 
-The plugin uses an API from IPStack.com to look up the user's location based on their IP address. Note: an active IPStack API Key is required for this plugin to function, you can register a free account at IPStack.com.
+The plugin uses a geolocation API to look up the user's location based on their IP address. Note: an active API Key is required for this plugin to function, currently there are two services available to use, you can choose from either 'IPStack' - http://ipstack.com and 'IPGeolocation' - https://ipgeolocation.io as the geolocation providers.
 
-= Can I use a differ geolocation API? =
+= Can I use other geolocation APIs? =
 
-No, at this time it is only available through the IPStack API.
+No, at this time it is only possible to use either the IPStack.com API or the IPGeolocation.io API.
 
 = How do I configure the plugin settings? =
 
@@ -62,6 +67,18 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 
 
 == Changelog ==
+
+= 1.47 =
+
+- Fixed first-run issue setting the default country code as active when using the ipgeolocation API due to a difference in the country code parameter naming. Tweaked position and wording of some error notification messages.
+
+= 1.46 =
+
+- Added initial blank "Select..." value to the `API Provider` dropdown as it would default to 'ipgeolocation' at first which would cause issues if saving without an API key set. Also added an additional check to make sure a valid API provider value is set when the actual login location check is triggered.
+
+= 1.45 =
+
+- Added ipgeolocation.io as an additional API provider. Plugin description text updated to provide information about this additional service. Also provided additional text to clarify that IPStack's free API limit which has been reduced to 100 requests per month and clarified compatibility up to WordPress 5.8.2.
 
 = 1.44 =
 
