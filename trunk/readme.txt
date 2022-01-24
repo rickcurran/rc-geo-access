@@ -3,7 +3,7 @@ Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 4.6
-Tested up to: 5.8.2
+Tested up to: 5.9
 Stable tag: 1.47
 Requires PHP: 5.6
 License: GPLv2 or later
