@@ -3,7 +3,7 @@
 Plugin Name: RC Geo Access
 Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.47
+Version: 1.48
 Author: Rick Curran
 Author URI: https://qreate.co.uk
 License: GPLv2 or later
@@ -600,9 +600,9 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
     } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
         
         $ch = curl_init( 'https://api.ipgeolocation.io/ipgeo?apiKey=' . $rc_geo_access_key . '&ip=' . $ip . '&fields=country_code2,country_name,longitude,latitude' );
-        curl_setopt( $cURL, CURLOPT_HTTPGET, true );
+        curl_setopt( $ch, CURLOPT_HTTPGET, true );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-        curl_setopt($cURL, CURLOPT_HTTPHEADER, array(
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
             'Accept: application/json',
             'User-Agent: '.$_SERVER['HTTP_USER_AGENT']
@@ -612,6 +612,8 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
 
     $json = curl_exec( $ch );
     curl_close( $ch );
+    // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
+    unset( $ch );
 
     $rc_geo_access_api_result = json_decode( $json, true );
     
