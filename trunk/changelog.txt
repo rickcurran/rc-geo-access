@@ -1,5 +1,9 @@
 # Changelog 
 
+## 1.48
+
+- Code tweak for PHP8 compatiblity
+
 ## 1.47
 
 - Fixed first-run issue setting the default country code as active when using the ipgeolocation API due to a difference in the country code parameter naming. Tweaked position and wording of some error notification messages.
