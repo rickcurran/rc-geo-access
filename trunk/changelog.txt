@@ -1,5 +1,9 @@
 # Changelog 
 
+## 1.49
+
+- Added support for OpenLiteSpeed web server’s local Geolocation functionality, this removes the need for an external third-party geolocation API if you are serving websites using OLS. See more details about how to configure this in OLS here: https://docs.openlitespeed.org/config/advanced/geolocation/#enabling-geolocation 
+
 ## 1.48
 
 - Code tweak for PHP8 compatiblity
