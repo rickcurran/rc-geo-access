@@ -3,7 +3,7 @@
 Plugin Name: RC Geo Access
 Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
-Version: 1.48
+Version: 1.49
 Author: Rick Curran
 Author URI: https://qreate.co.uk
 License: GPLv2 or later
@@ -29,7 +29,11 @@ function rc_geo_access_admin_notice__info() {
     
     $options = get_option( 'rc_geo_access_settings' );
 
-    if ( ( !isset( $options[ 'rc_geo_access_status' ] ) && !isset( $options[ 'rc_geo_access_ipstack_api_key' ] ) ) || ( $options[ 'rc_geo_access_status' ] !== 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] === '' ) ) {
+    if ( 
+        ( !isset( $options[ 'rc_geo_access_status' ] ) && !isset( $options[ 'rc_geo_access_ipstack_api_key' ] ) ) || ( $options[ 'rc_geo_access_status' ] !== 'enabled' && $options[ 'rc_geo_access_ipstack_api_key' ] === '' ) ||
+        ( !isset( $options[ 'rc_geo_access_status' ] ) && !isset( $options[ 'rc_geo_access_ipgeolocation_api_key' ] ) ) || ( $options[ 'rc_geo_access_status' ] !== 'enabled' && $options[ 'rc_geo_access_ipgeolocation_api_key' ] === '' ) ||
+        ( !isset( $options[ 'rc_geo_access_status' ] ) && !isset( $options[ 'rc_geo_access_openlitespeed_local_geoip' ] ) ) || ( $options[ 'rc_geo_access_status' ] !== 'enabled' && $options[ 'rc_geo_access_openlitespeed_local_geoip' ] === '' ) 
+    ) {
         
         if ( is_admin() ) {
             
@@ -68,6 +72,8 @@ function rc_geo_access_settings_init() {
 
     add_settings_field( 'rc_geo_access_ipgeolocation_api_key', __( 'IPGeolocation API Key:', 'rc_geo_access_plugin' ), 'rc_geo_access_ipgeolocation_api_key_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
 
+    add_settings_field( 'rc_geo_access_openlitespeed_local_geoip', __( 'OpenLiteSpeed GeoIP:', 'rc_geo_access_plugin' ), 'rc_geo_access_openlitespeed_local_geoip_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
+
 	add_settings_field( 'rc_geo_access_restricted_countries', __( 'Country Whitelist:', 'rc_geo_access_plugin' ), 'rc_geo_access_restricted_countries_render', 'rc_geo_access_admin_page', 'rc_geo_access_admin_page_section' );
             
     add_settings_section( 'rc_geo_access_admin_page_notifications_section', 'Email Notifications', 'rc_geo_access_settings_notifications_section_callback', 'rc_geo_access_admin_page' );
@@ -95,7 +101,7 @@ function rc_geo_access_email_recipient_render() {
 <?php
     if ( $options[ 'rc_geo_access_email_recipient' ] === '' ) {
         
-        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Please enter a valid email address to receive notifications.', 'rc_geo_access_plugin' ) . '</p>';
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Please enter a valid email address to receive notifications.', 'rc_geo_access_plugin' ) . '</p>';
         
     }
     
@@ -103,7 +109,7 @@ function rc_geo_access_email_recipient_render() {
         
         if ( ! is_email( $options[ 'rc_geo_access_email_recipient' ] ) ) {
         
-            echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Sorry, that doesn\'t appear to be a valid email address, please check your typing and try again.', 'rc_geo_access_plugin' ) . ' -' . $options[ 'rc_geo_access_email_recipient' ] . '-</p>';
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Sorry, that doesn\'t appear to be a valid email address, please check your typing and try again.', 'rc_geo_access_plugin' ) . ' -' . $options[ 'rc_geo_access_email_recipient' ] . '-</p>';
             
         }
         
@@ -133,13 +139,14 @@ function rc_geo_access_api_provider_render() {
 	?>
 	<select name='rc_geo_access_settings[rc_geo_access_api_provider]'>
 		<option value="">Select...</option>
-		<option value='ipgeolocation' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipgeolocation' ); ?>>ipgeolocation</option>
-		<option value='ipstack' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipstack' ); ?>>ipstack</option>
+		<option value='ipgeolocation' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipgeolocation' ); ?>>ipgeolocation.io</option>
+		<option value='ipstack' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'ipstack' ); ?>>ipstack.com</option>
+		<option value='openlitespeed' <?php selected( $options[ 'rc_geo_access_api_provider' ], 'openlitespeed' ); ?>>OpenLiteSpeed’s local GeoIP variable</option>
 	</select>
 
 <?php
     if ( $options[ 'rc_geo_access_api_provider' ] == '' ) {
-        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Please select an API provider from the menu above.', 'rc_geo_access_plugin' ) . '</p>';
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Please select an API provider from the menu above.', 'rc_geo_access_plugin' ) . '</p>';
     }
 }
 
@@ -156,7 +163,7 @@ function rc_geo_access_status_render() {
 <?php
     if ( $options[ 'rc_geo_access_status' ] === 'disabled' ) {
         
-        echo '<p style="color:darkorange;font-weight:bold;">&uarr; ' . __( 'Change this to "Enabled" to turn on access restriction', 'rc_geo_access_plugin' ) . '</p>';
+        echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Change this to "Enabled" to turn on access restriction', 'rc_geo_access_plugin' ) . '</p>';
         
     }
 
@@ -179,7 +186,7 @@ function rc_geo_access_ipstack_api_key_render() {
 	<?php
         if ( $options[ 'rc_geo_access_ipstack_api_key' ] === '' && $options[ 'rc_geo_access_api_provider' ] === 'ipstack' ) {
             
-            echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
             
         }
     
@@ -194,7 +201,7 @@ function rc_geo_access_ipstack_api_key_render() {
             $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
 
             if ( $rc_geo_access_error_status !== '' && $rc_geo_access_provider == 'ipstack' ) { // If errors then display message...
-                echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . $rc_geo_access_error_status . '</p>';
+                echo '<p style="color:#fff;font-weight:bold;padding:10px;border-radius:8px;background-color:red;">&uarr;&nbsp;' . $rc_geo_access_error_status . '</p>';
             }
             
         }
@@ -220,7 +227,7 @@ function rc_geo_access_ipgeolocation_api_key_render() {
 	<?php
         if ( $options[ 'rc_geo_access_ipgeolocation_api_key' ] === '' && $options[ 'rc_geo_access_api_provider' ] === 'ipgeolocation' ) {
             
-            echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Please enter an API Key. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
             
         }
     
@@ -235,7 +242,48 @@ function rc_geo_access_ipgeolocation_api_key_render() {
             $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
 
             if ( $rc_geo_access_error_status !== '' && $rc_geo_access_provider == 'ipgeolocation' ) { // If errors then display message...
-                echo '<p style="color:darkorange;font-weight:bold;">&uarr;' . $rc_geo_access_error_status . '</p>';
+                echo '<p style="color:#fff;font-weight:bold;padding:10px;border-radius:8px;background-color:red;">&uarr;&nbsp;' . $rc_geo_access_error_status . '</p>';
+            }
+            
+        }
+    
+}
+
+function rc_geo_access_openlitespeed_local_geoip_render() {
+
+	$options = get_option( 'rc_geo_access_settings' );
+    $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    
+    $rc_geo_access_ipstack_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
+    $rc_geo_access_ipgeolocation_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+    $rc_geo_access_openlitespeed_local_geoip = $options[ 'rc_geo_access_openlitespeed_local_geoip' ];
+    
+    $rc_geo_access_api_warn = '';
+    if ( $rc_geo_access_provider == 'openlitespeed' && ( $rc_geo_access_ipgeolocation_api_key != '' || $rc_geo_access_ipstack_api_key != '' ) ) {
+        $rc_geo_access_api_warn = '<p style="color:darkorange;font-weight:normal;">You have selected <strong>OpenLiteSpeed\'s local GeoIP variable</strong> as your geolocation API provider, only enter an API key in the <strong>ipgeolocation.io</strong> or <strong>ipstack.com</strong> API Key fields if using those APIs.</p>';
+    }
+    
+	?>
+	<input type='text' name='rc_geo_access_settings[rc_geo_access_openlitespeed_local_geoip]' value='NO API KEY REQUIRED' size="50" readonly>
+	<?php
+        if ( $options[ 'rc_geo_access_openlitespeed_local_geoip' ] === '' && $options[ 'rc_geo_access_api_provider' ] === 'openlitespeed' ) {
+            
+            echo '<p style="color:darkorange;font-weight:bold;">&uarr;&nbsp;' . __( 'Please ensure a Geolocation database is configured on your OpenLiteSpeed server. This is required for access restriction to function', 'rc_geo_access_plugin' ) . '</p>';
+            
+        }
+    
+        echo $rc_geo_access_api_warn;
+    
+        // Check if API Key has any errors...
+        if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $options[ 'rc_geo_access_openlitespeed_local_geoip' ] !== '' ) {
+            
+            // Lookup current admin user's location...
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $_SERVER[ 'REMOTE_ADDR' ], $options[ 'rc_geo_access_openlitespeed_local_geoip' ], $options[ 'rc_geo_access_api_provider' ] );
+            // ...and then check response for any errors relating to the API key...
+            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
+
+            if ( $rc_geo_access_error_status !== '' && $rc_geo_access_provider == 'openlitespeed' ) { // If errors then display message...
+                echo '<p style="color:#fff;font-weight:bold;padding:10px;border-radius:8px;background-color:red;">&uarr;&nbsp;' . $rc_geo_access_error_status . '</p>';
             }
             
         }
@@ -252,6 +300,9 @@ function rc_geo_access_restricted_countries_render() {
 
     } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
         $rc_geo_access_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+        
+    } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_openlitespeed_local_geoip' ];
     }
     
     
@@ -264,7 +315,7 @@ function rc_geo_access_restricted_countries_render() {
     
     $rc_geo_access_no_countries_forced_country_code = '';
     
-    if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $rc_geo_access_provider !== '' && ( $options[ 'rc_geo_access_ipstack_api_key' ] !== '' || $options[ 'rc_geo_access_ipgeolocation_api_key' ] !== '' ) ) {
+    if ( $options[ 'rc_geo_access_status' ] === 'enabled' && $rc_geo_access_provider !== '' && ( $options[ 'rc_geo_access_ipstack_api_key' ] !== '' || $options[ 'rc_geo_access_ipgeolocation_api_key' ] !== '' || $options[ 'rc_geo_access_openlitespeed_local_geoip' ] !== '' ) ) {
         $rga_countries_whitelist_style = 'style="display:block;"';
         
     } else {
@@ -289,6 +340,9 @@ function rc_geo_access_restricted_countries_render() {
 
         } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
              $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
+            
+        } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+             $rc_geo_access_country_code = $rc_geo_access_api_result[ 'geoip_country_code' ];
         }
         
         $rc_geo_access_no_countries_forced_country_code = '';
@@ -314,16 +368,19 @@ function rc_geo_access_restricted_countries_render() {
         foreach ( $rc_geo_access_countries as $k => $v ) {
 
             $checked = '';
+            $il_style = 'padding:5px 10px 5px 8px;display:block;';
             if ( is_array($rc_geo_access_restricted_countries) && in_array( $v, $rc_geo_access_restricted_countries ) ) {
                 $checked = ' checked';
+                $il_style = 'padding:5px 10px 5px 8px;display:block;background-color:#C1E1C1;border-radius:6px;';
             }
 
             // Force check user's location to be whitelisted, we're attempting to prevent the user locking themselves out of their site!
             if ( $rc_geo_access_no_countries_forced_country_code === $v ) {
                 $checked = ' checked';
+                $il_style = 'padding:5px 10px 5px 8px;display:block;background-color:#C1E1C1;border-radius:6px;';
             }
 
-            echo '<li><label style="padding:0 10px 0 8px;display:block;"><input type="checkbox" name="rc_geo_access_settings[rc_geo_access_restricted_countries][]" value="' . $v . '"' . $checked . '> <span>' . $k . ' - ' . $v . '</span></label></li>';
+            echo '<li><label style="' . $il_style . '"><input type="checkbox" name="rc_geo_access_settings[rc_geo_access_restricted_countries][]" value="' . $v . '"' . $checked . '> <span>' . $k . ' - ' . $v . '</span></label></li>';
 
 
         }
@@ -340,12 +397,13 @@ function rc_geo_access_settings_section_callback() {
 
 	echo __( '
     <p>This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it. Restricting access in this way can be a useful way of reducing unwanted login attempts.</p>
-    <p>To get the location of the user the plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using a geolocation API, currently there are two services available to use:</p>
-    <ul>
-        <li><strong>ipstack:</strong> <a href="http://ipstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=rick54" target="_blank">ipstack.com</a>.</li>
-        <li><strong>ipgeolocation:</strong> <a href="https://ipgeolocation.io/" target="_blank">ipgeolocation.io</a>.</li>
+    <p>The plugin gets the IP address of the user attempting to access the login page and geo-locates their location by using a geolocation API, currently there are three options available to use:</p>
+    <ul style="list-style:decimal;margin-left: 1.75rem;">
+        <li><strong>ipstack.com:</strong> <a href="http://ipstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=rick54" target="_blank">ipstack.com</a>.</li>
+        <li><strong>ipgeolocation.io:</strong> <a href="https://ipgeolocation.io/" target="_blank">ipgeolocation.io</a>.</li>
+        <li><strong>OpenLiteSpeed’s local GeoIP variables:</strong> <a href="https://docs.openlitespeed.org/config/advanced/geolocation/#enabling-geolocation" target="_blank">View OLS Enabling GeoLocation instructions</a>.</li>
     </ul>
-    <p><strong>Please note: an active API Key is required for either of these this services for the plugin to function correctly.</strong> You can register a free account at either of the website addresses above. Please note they offer varying amounts of location API requests for their free and paid plans, it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts.</p>', 'rc_geo_access_plugin' );
+    <p><strong>Please note: an active API Key or a specifically configured OpenLiteSpeed webserver is required for the plugin to function correctly.</strong> You can register a free account at either of the website addresses above. Please note they offer varying amounts of location API requests for their free and paid plans, it may be necessary to upgrade to a paid plan to provide an increased amount of requests if your site gets a huge amount of login attempts. The “OpenLiteSpeed" option requires a configured IPGeolocation database as per the linked instructions.</p>', 'rc_geo_access_plugin' );
     
     submit_button();
 
@@ -429,6 +487,11 @@ function rc_geo_access_func() {
 
     } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
         $rc_geo_access_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
+        
+    } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+        //wp_die( 'HI openlitespeed' );
+        $rc_geo_access_api_key = $options[ 'rc_geo_access_openlitespeed_local_geoip' ];
+        
     }
     
     if ( $rc_geo_status === 'enabled' && $rc_geo_access_provider !== '' && $rc_geo_access_api_key !== '' ) { // Check that Restriction is enabled, API provider is not empty and API Key is not empty...
@@ -444,14 +507,23 @@ function rc_geo_access_func() {
             
             // Output the 2 letter "country_code" and other details...
             if ( $rc_geo_access_provider == 'ipstack' ) {
-                 $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
+                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
+                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
+                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
 
             } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
-                 $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
+                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
+                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
+                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
+                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
+                
+            } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'geoip_country_code' ];
+                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
+                $rc_geo_access_longitude = 'N/A';
+                $rc_geo_access_latitude = 'N/A';
             }
-            $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
-            $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
-            $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
 
             // Get list of enabled countries...
             $rc_geo_access_restricted_countries = array();
@@ -525,6 +597,8 @@ function rc_geo_access_func() {
             
         }
 
+    } else {
+        error_log( 'RC GEO ACCESS - NO API KEY FOUND' );
     }
     
 }
@@ -580,6 +654,12 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access
             }
         }
 
+    } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+        // Check if `GEOIP_COUNTRY_CODE` and `GEOIP_COUNTRY_NAME` server variables exist...        
+        if ( !isset( $_SERVER[ 'GEOIP_COUNTRY_CODE' ] ) || !isset( $_SERVER[ 'GEOIP_COUNTRY_NAME' ] ) ) {
+            $rga_error_status = __( 'Sorry, the OpenLiteSpeed GeoIP variables could not be read. This could be due to the IP address not being found in the Geolocation database. Please also check that you have configured the OLS geolocation lookup function correctly.', 'rc_geo_access_plugin' );
+        }
+
     }
     
     return $rga_error_status;
@@ -597,6 +677,13 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
         $ch = curl_init( 'http://api.ipstack.com/' . $ip . '?access_key=' . $rc_geo_access_key . '&fields=country_code,country_name,longitude,latitude' );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         
+        $json = curl_exec( $ch );
+        curl_close( $ch );
+        // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
+        unset( $ch );
+
+        $rc_geo_access_api_result = json_decode( $json, true );
+        
     } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
         
         $ch = curl_init( 'https://api.ipgeolocation.io/ipgeo?apiKey=' . $rc_geo_access_key . '&ip=' . $ip . '&fields=country_code2,country_name,longitude,latitude' );
@@ -608,15 +695,30 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
             'User-Agent: '.$_SERVER['HTTP_USER_AGENT']
         ));
         
+        $json = curl_exec( $ch );
+        curl_close( $ch );
+        // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
+        unset( $ch );
+
+        $rc_geo_access_api_result = json_decode( $json, true );
+        
+    } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
+        
+        
+        $rc_geo_access_api_result_json = '{ "geoip_country_code": "' . $_SERVER[ 'GEOIP_COUNTRY_CODE' ] . '", "country_name": "' . $_SERVER[ 'GEOIP_COUNTRY_NAME' ] . '", "latitude": 0, "longitude": 0 }';
+        
+        $rc_geo_access_api_result = json_decode( $rc_geo_access_api_result_json, true );
+            
+        /*$geoip_country_code = $_SERVER[ 'GEOIP_COUNTRY_CODE' ]
+        $rc_geo_access_country_name = $_SERVER[ 'GEOIP_COUNTRY_NAME' ];
+        $rc_geo_access_longitude = 'na';
+        $rc_geo_access_latitude = 'na';*/
+        
+        //wp_die( print_r( $rc_geo_access_api_result ) );
+        //wp_die( print_r( $rc_geo_access_api_result_json ) );
+        
     }
 
-    $json = curl_exec( $ch );
-    curl_close( $ch );
-    // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
-    unset( $ch );
-
-    $rc_geo_access_api_result = json_decode( $json, true );
-    
     return $rc_geo_access_api_result;
 }
 
