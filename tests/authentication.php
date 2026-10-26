@@ -10,6 +10,13 @@ $cases = array(
     'non-api-unchanged', 'disabled-unchanged', 'other-auth-error-preserved',
     'page-and-auth-check-once', 'xmlrpc-multicall-check-once',
     'error-notification-once', 'errors-only-no-restriction-email',
+    'page-missing-geoip', 'xmlrpc-missing-geoip', 'application-password-missing-geoip',
+    'missing-country-code', 'null-country-code', 'empty-country-code',
+    'invalid-country-code', 'array-country-code', 'missing-name-blocked',
+    'missing-name-allowed', 'empty-name-allowed', 'quoted-name-allowed',
+    'lowercase-code-allowed', 'missing-marker-allowed', 'missing-code-no-email',
+    'missing-code-errors-only', 'disabled-missing-geoip', 'missing-provider',
+    'missing-api-key', 'invalid-whitelist', 'no-saved-settings',
 );
 
 if ( ! isset( $argv[1] ) ) {
@@ -29,6 +36,7 @@ if ( ! in_array( $case, $cases, true ) ) {
 }
 
 error_reporting( E_ALL );
+set_error_handler( function ( $severity, $message, $file, $line ) { throw new ErrorException( $message, 0, $severity, $file, $line ); } );
 $hooks = array();
 $emails = array();
 $option_reads = 0;
@@ -73,6 +81,7 @@ function get_option( $name ) {
 function __( $value, ...$args ) { return $value; }
 function maybe_unserialize( $value ) { return $value; }
 function is_email( $value ) { return filter_var( $value, FILTER_VALIDATE_EMAIL ); }
+function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function site_url() { return 'https://example.test'; }
 function wp_mail( ...$args ) { $GLOBALS['emails'][] = $args; return true; }
 class GeoAccessBlocked extends RuntimeException {
@@ -101,7 +110,7 @@ add_filter( 'authenticate', function ( $user ) {
     return $user === null ? 'authenticated-user' : $user;
 }, 20 );
 
-$allowed_cases = array( 'page-allowed', 'xmlrpc-allowed', 'application-password-allowed', 'other-auth-error-preserved', 'page-and-auth-check-once', 'xmlrpc-multicall-check-once' );
+$allowed_cases = array( 'page-allowed', 'xmlrpc-allowed', 'application-password-allowed', 'other-auth-error-preserved', 'page-and-auth-check-once', 'xmlrpc-multicall-check-once', 'missing-name-allowed', 'empty-name-allowed', 'quoted-name-allowed', 'lowercase-code-allowed', 'missing-marker-allowed', 'invalid-whitelist' );
 if ( in_array( $case, $allowed_cases, true ) ) {
     $_SERVER['GEOIP_COUNTRY_CODE'] = 'GB';
     $_SERVER['GEOIP_COUNTRY_NAME'] = 'United Kingdom';
@@ -111,7 +120,27 @@ if ( $case === 'page-post-blocked' ) { $_SERVER['REQUEST_METHOD'] = 'POST'; }
 if ( $case === 'disabled-unchanged' ) { $options['rc_geo_access_status'] = 'disabled'; }
 if ( $case === 'errors-only-no-restriction-email' ) { $options['rc_geo_access_email_notification_type'] = 'errors_only'; }
 
-$expected_block = in_array( $case, array( 'page-get-blocked', 'page-post-blocked', 'xmlrpc-blocked', 'custom-form-blocked', 'application-password-blocked', 'errors-only-no-restriction-email' ), true );
+$unknown_cases = array( 'error-notification-once', 'page-missing-geoip', 'xmlrpc-missing-geoip', 'application-password-missing-geoip', 'missing-country-code', 'null-country-code', 'empty-country-code', 'invalid-country-code', 'array-country-code', 'missing-code-no-email', 'missing-code-errors-only', 'missing-provider', 'missing-api-key' );
+if ( in_array( $case, $unknown_cases, true ) || $case === 'disabled-missing-geoip' ) { unset( $_SERVER['GEOIP_COUNTRY_CODE'] ); }
+if ( strpos( $case, 'missing-geoip' ) !== false ) { unset( $_SERVER['GEOIP_COUNTRY_NAME'] ); }
+if ( strpos( $case, 'missing-name-' ) === 0 ) { unset( $_SERVER['GEOIP_COUNTRY_NAME'] ); }
+if ( $case === 'null-country-code' ) { $_SERVER['GEOIP_COUNTRY_CODE'] = null; }
+if ( $case === 'empty-country-code' ) { $_SERVER['GEOIP_COUNTRY_CODE'] = '  '; }
+if ( $case === 'invalid-country-code' ) { $_SERVER['GEOIP_COUNTRY_CODE'] = 'XX'; }
+if ( $case === 'array-country-code' ) { $_SERVER['GEOIP_COUNTRY_CODE'] = array( 'GB' ); }
+if ( $case === 'empty-name-allowed' ) { $_SERVER['GEOIP_COUNTRY_NAME'] = ''; }
+if ( $case === 'quoted-name-allowed' ) { $_SERVER['GEOIP_COUNTRY_NAME'] = 'A "quoted" country name'; }
+if ( $case === 'lowercase-code-allowed' ) { $_SERVER['GEOIP_COUNTRY_CODE'] = ' gb '; }
+if ( $case === 'missing-marker-allowed' ) { unset( $options['rc_geo_access_openlitespeed_local_geoip'] ); }
+if ( $case === 'missing-code-no-email' ) { unset( $options['rc_geo_access_email_recipient'] ); }
+if ( $case === 'missing-code-errors-only' ) { $options['rc_geo_access_email_notification_type'] = 'errors_only'; }
+if ( $case === 'disabled-missing-geoip' ) { $options['rc_geo_access_status'] = 'disabled'; }
+if ( $case === 'missing-provider' ) { unset( $options['rc_geo_access_api_provider'] ); }
+if ( $case === 'missing-api-key' ) { $options['rc_geo_access_api_provider'] = 'ipstack'; }
+if ( $case === 'invalid-whitelist' ) { $options['rc_geo_access_restricted_countries'] = 'GB'; }
+if ( $case === 'no-saved-settings' ) { $options = false; }
+
+$expected_block = in_array( $case, $unknown_cases, true ) || in_array( $case, array( 'page-get-blocked', 'page-post-blocked', 'xmlrpc-blocked', 'custom-form-blocked', 'application-password-blocked', 'errors-only-no-restriction-email', 'missing-name-blocked', 'invalid-whitelist' ), true );
 $blocked = false;
 try {
     if ( strpos( $case, 'page-' ) === 0 ) {
@@ -129,14 +158,6 @@ try {
     } elseif ( $case === 'other-auth-error-preserved' ) {
         $error = new stdClass();
         check( apply_filters( 'authenticate', $error ) === $error, 'Existing authentication result was replaced' );
-    } elseif ( $case === 'error-notification-once' ) {
-        unset( $_SERVER['GEOIP_COUNTRY_NAME'] );
-        // Existing lookup-error policy is intentionally outside this change.
-        set_error_handler( function () { return true; } );
-        authenticate_candidate();
-        authenticate_candidate();
-        restore_error_handler();
-        check( count( $emails ) === 1, 'Lookup-error notifications duplicated' );
     } else {
         check( authenticate_candidate() === 'authenticated-user', 'Allowed authentication changed' );
         if ( $case === 'xmlrpc-multicall-check-once' ) {
@@ -146,10 +167,15 @@ try {
 } catch ( GeoAccessBlocked $error ) {
     $blocked = true;
     check( $error->response === 403, 'Denial did not specify HTTP/XML-RPC error 403' );
-    check( strpos( $error->getMessage(), 'RCGEOAXSUS001' ) !== false, 'Country error code missing' );
+    $expected_country = in_array( $case, $unknown_cases, true ) ? 'UNKNOWN' : ( $case === 'invalid-whitelist' ? 'GB' : 'US' );
+    check( strpos( $error->getMessage(), 'RCGEOAXS' . $expected_country . '001' ) !== false, 'Country error code missing' );
     check( $password_checks === 0, 'Blocked request reached password validation' );
-    $expected_emails = $case === 'errors-only-no-restriction-email' ? 0 : 1;
+    $expected_emails = in_array( $case, array( 'errors-only-no-restriction-email', 'missing-code-no-email' ), true ) ? 0 : 1;
     check( count( $emails ) === $expected_emails, 'Unexpected restriction email count' );
+    if ( $case === 'error-notification-once' ) {
+        try { authenticate_candidate(); check( false, 'Cached denial was bypassed' ); }
+        catch ( GeoAccessBlocked $again ) { check( count( $emails ) === 1, 'Lookup-error notifications duplicated' ); }
+    }
 }
 
 check( $blocked === $expected_block, 'Unexpected access decision for ' . $case );

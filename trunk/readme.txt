@@ -3,7 +3,7 @@ Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 5.0
-Tested up to: 6.6
+Tested up to: 7.1
 Stable tag: 1.49
 Requires PHP: 8.0
 License: GPLv2 or later
@@ -46,7 +46,7 @@ Enable the plugin and access the "RC Geo Access" page in the Settings menu in yo
 
 Yes. The country restriction is checked before WordPress processes credentials through its standard authentication pipeline, including XML-RPC authentication and custom forms using wp_signon() or wp_authenticate(). Application-password authentication, including REST API requests, is also checked. The login page itself remains protected before credentials are processed. Authenticated integrations must connect from an allowed country. Public XML-RPC methods that do not authenticate, such as pingbacks, are not disabled by this change.
 
-These routes share one location check per request, including XML-RPC multicalls. The existing lookup-error policy is unchanged: a recognised geolocation error can still allow access. Plugins implementing their own authentication outside WordPress's hooks are outside this protection.
+These routes share one location check per request, including XML-RPC multicalls. When restrictions are enabled, missing or invalid country codes, provider errors, and incomplete provider configuration deny login access with a 403 error. OpenLiteSpeed country names are optional; only a recognised country code is required. Plugins implementing their own authentication outside WordPress's hooks are outside this protection.
 	
 = What does this plugin do? =
 
@@ -68,17 +68,23 @@ You can configure all of the plugin settings from the "RC Geo Access" menu found
 
 If you're not seeing any error messages when you are in the plugin settings page then it should hopefully be working correctly. If you've enabled email notifications then at some point you should receive an email when your login page is restricted. There is a way to test it yourself  but you need to be very careful! Uncheck your country from the list and save the changes (do not close the browser window or logout from WordPress or you will be locked out of your site - see below for help if that happens!), using another browser or browser tab attempt to access your login page.
 
+= What happens if geolocation fails? =
+
+When restrictions are enabled, an unknown country is blocked even if the geolocation database or provider is unavailable. Error emails are sent if a valid recipient is configured. Existing administrator sessions are not terminated by this check, so you can correct settings from an already authenticated session. If you cannot log in, use SFTP or your hosting file manager to rename the plugin directory temporarily, then sign in and repair the geolocation configuration.
+
 = Help! I've enabled this plugin and now I'm locked out of my site! =
 
 Yikes, sorry! There is a potential danger of this happening if you have enabled the restriction (including the required API key) but you did not set your own country location to be accessible. If this happens then I'm afraid the only option here is to connect to your site directly via SFTP / FTP and remove the plugin files from your site. Once removed you will then be able to login, you can then re-install the plugin, you should then immediately ensure that your current country location is given access in the "RC Geo Access" page in the Settings menu in your WordPress Admin.
 
 = I am using the OpenLiteSpeed Geolocation option but it isn't blocking login access =
 
-If you are using the OpenLiteSpeed option the IP address of users to your site must be found in the configured Geolocation database in order to establish the user’s country. If the IP address isn't found it will trigger an error message email to be sent which begins with "Sorry, the OpenLiteSpeed GeoIP variables could not be read...". If you receive this error email then you should check that the Geolocation database is configured correctly and also that the database is up to date.
+If you are using the OpenLiteSpeed option the IP address of users to your site must be found in the configured Geolocation database in order to establish the user’s country. If the IP address is not found, login access is denied. If a valid notification email address is configured, it will trigger an error message email to be sent which begins with "Sorry, the OpenLiteSpeed GeoIP variables could not be read...". If you receive this error email then you should check that the Geolocation database is configured correctly and also that the database is up to date.
 
 == Changelog ==
 
 = Unreleased =
+
+- Deny login access when geolocation cannot identify a recognised country, including missing OpenLiteSpeed variables and provider errors. Country names are optional.
 
 - Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.
 - Apply country restrictions before credential validation through WordPress authentication, including XML-RPC and custom login forms.

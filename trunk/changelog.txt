@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Deny login access when geolocation cannot identify a recognised country, including missing OpenLiteSpeed variables and provider errors. Country names are optional.
+
 - Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.
 - Apply country restrictions before credential validation through WordPress authentication, including XML-RPC and custom login forms.
 - Cover application-password authentication, including REST API requests.

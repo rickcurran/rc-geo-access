@@ -501,14 +501,30 @@ function rc_geo_access_func() {
     // login_init, authenticate and application-password checks may all run in
     // one request. Reuse the decision, including across XML-RPC multicalls.
     static $checked = false;
+    static $denied_country = null;
     if ( $checked ) {
+        if ( $denied_country !== null ) {
+            rc_geo_access_deny_access( $denied_country );
+        }
         return;
     }
     $checked = true;
     
     $options = get_option( 'rc_geo_access_settings' );
+    $options = array_merge( array(
+        'rc_geo_access_status' => 'disabled',
+        'rc_geo_access_api_provider' => '',
+        'rc_geo_access_ipstack_api_key' => '',
+        'rc_geo_access_ipgeolocation_api_key' => '',
+        'rc_geo_access_email_recipient' => '',
+        'rc_geo_access_email_notification_type' => 'restrictions_and_errors',
+    ), is_array( $options ) ? $options : array() );
     $rc_geo_status = $options[ 'rc_geo_access_status' ];
+    if ( $rc_geo_status !== 'enabled' ) {
+        return;
+    }
     $rc_geo_access_provider = $options[ 'rc_geo_access_api_provider' ];
+    $rc_geo_access_api_key = '';
     if ( $rc_geo_access_provider == 'ipstack' ) {
         $rc_geo_access_api_key = $options[ 'rc_geo_access_ipstack_api_key' ];
 
@@ -516,50 +532,54 @@ function rc_geo_access_func() {
         $rc_geo_access_api_key = $options[ 'rc_geo_access_ipgeolocation_api_key' ];
         
     } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
-        //wp_die( 'HI openlitespeed' );
-        $rc_geo_access_api_key = $options[ 'rc_geo_access_openlitespeed_local_geoip' ];
+        // Local lookups do not require an API key or the settings UI's marker.
+        $rc_geo_access_api_key = 'local';
         
     }
     
-    if ( $rc_geo_status === 'enabled' && $rc_geo_access_provider !== '' && $rc_geo_access_api_key !== '' ) { // Check that Restriction is enabled, API provider is not empty and API Key is not empty...
+    if ( $rc_geo_status === 'enabled' ) {
         
-        $ip = $_SERVER[ 'REMOTE_ADDR' ];
+        $ip = $_SERVER[ 'REMOTE_ADDR' ] ?? '';
         
-        $rc_geo_access_api_result = rc_geo_access_lookup_ip( $ip , $rc_geo_access_api_key, $rc_geo_access_provider );
-
-        // Check for API errors etc...
-        $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
+        if ( ! in_array( $rc_geo_access_provider, array( 'ipstack', 'ipgeolocation', 'openlitespeed' ), true ) || ! is_string( $rc_geo_access_api_key ) || trim( $rc_geo_access_api_key ) === '' ) {
+            $rc_geo_access_error_status = __( 'Geolocation is enabled but its provider or API key is not configured. Login access has been denied.', 'rc_geo_access_plugin' );
+        } else {
+            $rc_geo_access_api_result = rc_geo_access_lookup_ip( $ip , $rc_geo_access_api_key, $rc_geo_access_provider );
+            $rc_geo_access_error_status = rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider );
+        }
                 
         if ( $rc_geo_access_error_status === '' ) { // If there are no errors then proceed with restriction...
             
             // Output the 2 letter "country_code" and other details...
             if ( $rc_geo_access_provider == 'ipstack' ) {
-                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code' ];
-                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
-                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
-                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
+                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ] ?? 'Unknown';
+                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ] ?? 'N/A';
+                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ] ?? 'N/A';
 
             } else if ( $rc_geo_access_provider == 'ipgeolocation' ) {
-                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'country_code2' ];
-                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
-                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ];
-                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ];
+                $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ] ?? 'Unknown';
+                $rc_geo_access_longitude = $rc_geo_access_api_result[ 'longitude' ] ?? 'N/A';
+                $rc_geo_access_latitude = $rc_geo_access_api_result[ 'latitude' ] ?? 'N/A';
                 
             } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
-                $rc_geo_access_country_code = $rc_geo_access_api_result[ 'geoip_country_code' ];
                 $rc_geo_access_country_name = $rc_geo_access_api_result[ 'country_name' ];
                 $rc_geo_access_longitude = 'N/A';
                 $rc_geo_access_latitude = 'N/A';
             }
+            $rc_geo_access_country_code = rc_geo_access_country_code( $rc_geo_access_api_result, $rc_geo_access_provider );
 
             // Get list of enabled countries...
             $rc_geo_access_restricted_countries = array();
             if ( isset( $options[ 'rc_geo_access_restricted_countries' ] ) ) {
                 $rc_geo_access_restricted_countries = maybe_unserialize( $options[ 'rc_geo_access_restricted_countries' ] );
             }
+            if ( ! is_array( $rc_geo_access_restricted_countries ) ) {
+                $rc_geo_access_restricted_countries = array();
+            }
     
             // If the user location is not whitelisted then prevent access to the login page...
-            if ( ! in_array( $rc_geo_access_country_code, $rc_geo_access_restricted_countries ) ) {
+            if ( ! in_array( $rc_geo_access_country_code, $rc_geo_access_restricted_countries, true ) ) {
+                $denied_country = $rc_geo_access_country_code;
                 /*
                  * Send an email notification if email recipient field is completed and is a valid email address 
                  * and notifications type is set to "restrictions_and_errors"...
@@ -591,11 +611,11 @@ function rc_geo_access_func() {
                 }
                 
                 // Block display of login page and display a message...
-                wp_die( __( 'Sorry, access to this page is not available. Please contact the administrator of this website and provide the error code below to help them assist you.'.
-                '<br><br>Error Code: RCGEOAXS' . $rc_geo_access_country_code . '001' . '<br>', 'rc_geo_access_plugin' ), '', array( 'response' => 403 ) );
+                rc_geo_access_deny_access( $denied_country );
             }
             
         } else {
+            $denied_country = 'UNKNOWN';
             // Errors of some kind occurred, send an email with the error message
             /*
              * Send an Error email notification if email recipient field is completed and is a valid email address...
@@ -605,9 +625,10 @@ function rc_geo_access_func() {
                 $to = $options[ 'rc_geo_access_email_recipient' ];
                 $subject = 'Error Message from the RC Geo Access plugin on ' . site_url();
                 $body = '<p><b>This is an error message from the RC Geo Access plugin on ' . site_url() . '.</b></p>' . PHP_EOL;
-                $body .= '<p>There is an issue that may be preventing the RC Geo Access plugin from working correctly. Please read the error message below and take action to correct the problem:</p>' . PHP_EOL;
+                $body .= '<p>RC Geo Access could not determine the country for a login request, so access was denied. Please read the error message below and take action to correct the problem:</p>' . PHP_EOL;
+                $body .= '<p>IP Address: ' . esc_html( $ip ) . '</p>' . PHP_EOL;
 
-                $body .= '<p style="color:darkorange;font-weight:bold;font-size:120%;">' . $rc_geo_access_error_status . '</p>';
+                $body .= '<p style="color:darkorange;font-weight:bold;font-size:120%;">' . esc_html( $rc_geo_access_error_status ) . '</p>';
 
                 if ( isset( $_SERVER[ 'HTTP_REFERER' ] ) ) {
                     $body .= '<p>Referrer: ' . $_SERVER[ 'HTTP_REFERER' ] . '</p>' . PHP_EOL;
@@ -621,13 +642,31 @@ function rc_geo_access_func() {
                 $headers = array( 'Content-Type: text/html; charset=UTF-8' );
                 wp_mail( $to, $subject, $body, $headers );
             }
+            rc_geo_access_deny_access( $denied_country );
             
         }
 
-    } else {
-        error_log( 'RC GEO ACCESS - NO API KEY FOUND' );
     }
     
+}
+
+function rc_geo_access_deny_access( $country_code ) {
+    wp_die( __( 'Sorry, access to this page is not available. Please contact the administrator of this website and provide the error code below to help them assist you.', 'rc_geo_access_plugin' ) .
+        '<br><br>Error Code: RCGEOAXS' . esc_html( $country_code ) . '001<br>', '', array( 'response' => 403 ) );
+}
+
+/* Only recognised country codes can participate in the allowlist decision. */
+function rc_geo_access_country_code( $result, $provider ) {
+    $fields = array( 'ipstack' => 'country_code', 'ipgeolocation' => 'country_code2', 'openlitespeed' => 'geoip_country_code' );
+    if ( ! is_array( $result ) || ! is_string( $provider ) || ! isset( $fields[ $provider ] ) ) {
+        return '';
+    }
+    $code = $result[ $fields[ $provider ] ] ?? '';
+    if ( ! is_string( $code ) ) {
+        return '';
+    }
+    $code = strtoupper( trim( $code ) );
+    return in_array( $code, rc_geo_access_get_countries(), true ) ? $code : '';
 }
 
 /* 
@@ -636,12 +675,16 @@ function rc_geo_access_func() {
 function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access_provider ) {
     
     $rga_error_status = '';
+    if ( ! is_array( $rc_geo_access_api_result ) ) {
+        return __( 'The geolocation lookup did not return a valid response. Login access has been denied.', 'rc_geo_access_plugin' );
+    }
         
     if ( $rc_geo_access_provider == 'ipstack' ) {
         // Check if request to ipstack fails...
         if ( isset( $rc_geo_access_api_result[ 'success' ] ) && $rc_geo_access_api_result[ 'success' ] === false ) { // Failure occurred...
-            $rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
-            $rga_type = $rc_geo_access_api_result[ 'error' ][ 'type' ];
+            $error = isset( $rc_geo_access_api_result[ 'error' ] ) && is_array( $rc_geo_access_api_result[ 'error' ] ) ? $rc_geo_access_api_result[ 'error' ] : array();
+            $rga_code = isset( $error[ 'code' ] ) && is_scalar( $error[ 'code' ] ) ? (int) $error[ 'code' ] : 0;
+            $rga_type = isset( $error[ 'type' ] ) && is_string( $error[ 'type' ] ) ? $error[ 'type' ] : 'unknown_error';
 
             if ( $rga_code === 101 && $rga_type === 'invalid_access_key' ) { // INVALID API KEY
                 $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
@@ -652,7 +695,7 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access
                 // 401 error
 
             } else if ( $rga_code === 104 ) { // REACHED API LIMIT
-                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, login access will be denied until the allowance is restored or the geolocation configuration is changed.', 'rc_geo_access_plugin' );
                 // 429 error
 
             } else {
@@ -666,13 +709,13 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access
         if ( isset( $rc_geo_access_api_result[ 'message' ] ) ) {
             // If `message` appears in response then there is an error of some kind...
             //$rga_code = $rc_geo_access_api_result[ 'error' ][ 'code' ];
-            $rga_code = $rc_geo_access_api_result[ 'message' ];
+            $rga_code = is_string( $rc_geo_access_api_result[ 'message' ] ) && $rc_geo_access_api_result[ 'message' ] !== '' ? $rc_geo_access_api_result[ 'message' ] : 'Unknown geolocation error';
             // INVALID API KEY
             if ( strpos( $rga_code, 'Provided API key is not valid' ) !== false ) {
                 $rga_error_status = __( 'Sorry, an invalid API Key was specified. Please check you have entered it correctly.', 'rc_geo_access_plugin' );
                 
             } else if ( strpos( $rga_code, 'Your monthly limit has been reached' ) !== false ) { // REACHED API LIMIT
-                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, the login restriction will be unavailable until it is either upgraded or until a new monthly account period begins.', 'rc_geo_access_plugin' );
+                $rga_error_status = __( 'Sorry, you have reached the maximum allowed amount of monthly API requests for your API provider. You may need to upgrade your plan to increase the API requests, login access will be denied until the allowance is restored or the geolocation configuration is changed.', 'rc_geo_access_plugin' );
                 // 429 error
 
             } else {
@@ -682,11 +725,14 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access
         }
 
     } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
-        // Check if `GEOIP_COUNTRY_CODE` and `GEOIP_COUNTRY_NAME` server variables exist...        
-        if ( !isset( $_SERVER[ 'GEOIP_COUNTRY_CODE' ] ) || !isset( $_SERVER[ 'GEOIP_COUNTRY_NAME' ] ) ) {
+        // The display name is optional; only a recognised country code is required.
+        if ( rc_geo_access_country_code( $rc_geo_access_api_result, $rc_geo_access_provider ) === '' ) {
             $rga_error_status = __( 'Sorry, the OpenLiteSpeed GeoIP variables could not be read. This could be due to the IP address not being found in the Geolocation database. Please also check that you have configured the OLS geolocation lookup function correctly.', 'rc_geo_access_plugin' );
         }
 
+    }
+    if ( $rga_error_status === '' && rc_geo_access_country_code( $rc_geo_access_api_result, $rc_geo_access_provider ) === '' ) {
+        $rga_error_status = __( 'The geolocation lookup did not return a recognised country code. Login access has been denied.', 'rc_geo_access_plugin' );
     }
     
     return $rga_error_status;
@@ -698,6 +744,7 @@ function rc_geo_access_error_handling( $rc_geo_access_api_result, $rc_geo_access
  * Restriction geolocation function
  */
 function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provider ) {
+    $rc_geo_access_api_result = array();
     
     if ( $rc_geo_access_provider == 'ipstack' ) {
         
@@ -730,17 +777,12 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
     } else if ( $rc_geo_access_provider == 'openlitespeed' ) {
         
         
-        $rc_geo_access_api_result_json = '{ "geoip_country_code": "' . $_SERVER[ 'GEOIP_COUNTRY_CODE' ] . '", "country_name": "' . $_SERVER[ 'GEOIP_COUNTRY_NAME' ] . '", "latitude": 0, "longitude": 0 }';
-        
-        $rc_geo_access_api_result = json_decode( $rc_geo_access_api_result_json, true );
-            
-        /*$geoip_country_code = $_SERVER[ 'GEOIP_COUNTRY_CODE' ]
-        $rc_geo_access_country_name = $_SERVER[ 'GEOIP_COUNTRY_NAME' ];
-        $rc_geo_access_longitude = 'na';
-        $rc_geo_access_latitude = 'na';*/
-        
-        //wp_die( print_r( $rc_geo_access_api_result ) );
-        //wp_die( print_r( $rc_geo_access_api_result_json ) );
+        $rc_geo_access_api_result = array(
+            'geoip_country_code' => $_SERVER[ 'GEOIP_COUNTRY_CODE' ] ?? '',
+            'country_name' => isset( $_SERVER[ 'GEOIP_COUNTRY_NAME' ] ) && is_string( $_SERVER[ 'GEOIP_COUNTRY_NAME' ] ) ? $_SERVER[ 'GEOIP_COUNTRY_NAME' ] : 'Unknown',
+            'latitude' => 0,
+            'longitude' => 0,
+        );
         
     }
 

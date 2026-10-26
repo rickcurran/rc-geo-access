@@ -11,5 +11,7 @@ prevention across multiple hooks and XML-RPC multicalls.
 
 These are isolated regression tests, not a full WordPress/Wordfence integration
 suite. They assert that the plugin passes a 403 to WordPress's error handler;
-they do not render the actual HTML, XML-RPC or JSON response. The existing
-lookup-error policy is deliberately preserved and covered by one scenario.
+they do not render the actual HTML, XML-RPC or JSON response. Missing, empty, malformed and unrecognised OpenLiteSpeed country codes must
+deny access. Country names are optional, and repeated denials must not send
+duplicate error emails. Provider response validation is covered separately by
+`php tests/geolocation.php`.
