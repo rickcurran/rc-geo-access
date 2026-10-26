@@ -1,5 +1,13 @@
 # Changelog 
 
+## Unreleased
+
+- Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.
+- Apply country restrictions before credential validation through WordPress authentication, including XML-RPC and custom login forms.
+- Cover application-password authentication, including REST API requests.
+- Reuse the location check within each request to avoid duplicate lookups and notification emails.
+- Return a 403 denial through WordPress's context-appropriate error handler.
+
 ## 1.49
 
 - Added support for OpenLiteSpeed web server’s local Geolocation functionality, this removes the need for an external third-party geolocation API if you are serving websites using OLS. See more details about how to configure this in OLS here: https://docs.openlitespeed.org/config/advanced/geolocation/#enabling-geolocation 

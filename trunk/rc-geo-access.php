@@ -4,6 +4,7 @@ Plugin Name: RC Geo Access
 Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
 Description: This plugin restricts access to the login page of your WordPress Admin based on the location of the user trying to access it.
 Version: 1.49
+Requires PHP: 8.0
 Author: Rick Curran
 Author URI: https://qreate.co.uk
 License: GPLv2 or later
@@ -473,11 +474,37 @@ function rc_geo_access_row_meta( $links_array, $plugin_file_name, $plugin_data, 
 
 
 /*
- * Restriction checked on login_init
+ * Check the login page and authentication routes, including XML-RPC and
+ * custom forms using wp_authenticate()/wp_signon(). Run before core's
+ * authentication callbacks (priority 20), so blocked credentials are not tested.
  */
 add_action( 'login_init', 'rc_geo_access_func' );
+add_filter( 'authenticate', 'rc_geo_access_authenticate', 1 );
+add_filter( 'application_password_is_api_request', 'rc_geo_access_application_password_check', 1 );
+
+function rc_geo_access_authenticate( $user ) {
+    rc_geo_access_func();
+    return $user;
+}
+
+/* Application passwords can authenticate API requests outside wp_authenticate(). */
+function rc_geo_access_application_password_check( $is_api_request ) {
+    if ( $is_api_request ) {
+        rc_geo_access_func();
+    }
+
+    return $is_api_request;
+}
 
 function rc_geo_access_func() {
+
+    // login_init, authenticate and application-password checks may all run in
+    // one request. Reuse the decision, including across XML-RPC multicalls.
+    static $checked = false;
+    if ( $checked ) {
+        return;
+    }
+    $checked = true;
     
     $options = get_option( 'rc_geo_access_settings' );
     $rc_geo_status = $options[ 'rc_geo_access_status' ];
@@ -543,7 +570,7 @@ function rc_geo_access_func() {
                     $to = $options[ 'rc_geo_access_email_recipient' ];
                     $subject = 'Notification Message from the RC Geo Access plugin on ' . site_url();
                     $body = '<p><b>This is a notification message from the RC Geo Access plugin on ' . site_url() . '.</b></p>' . PHP_EOL;
-                    $body .= '<p>An attempt was made to access the login page from a restricted location.</p>' . PHP_EOL;
+                    $body .= '<p>An attempt was made to access the login page or authenticate from a restricted location.</p>' . PHP_EOL;
                     $body .= '<p>The geolocation data for the IP Address used in the access attempt was: </p>' . PHP_EOL;
                     $body .= '<ul><li>' . $ip . '</li>' . PHP_EOL;
                     $body .= '<li>Country Name: ' . $rc_geo_access_country_name . '</li>' . PHP_EOL;
@@ -565,7 +592,7 @@ function rc_geo_access_func() {
                 
                 // Block display of login page and display a message...
                 wp_die( __( 'Sorry, access to this page is not available. Please contact the administrator of this website and provide the error code below to help them assist you.'.
-                '<br><br>Error Code: RCGEOAXS' . $rc_geo_access_country_code . '001' . '<br>', 'rc_geo_access_plugin' ) );    
+                '<br><br>Error Code: RCGEOAXS' . $rc_geo_access_country_code . '001' . '<br>', 'rc_geo_access_plugin' ), '', array( 'response' => 403 ) );
             }
             
         } else {
@@ -678,8 +705,7 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         
         $json = curl_exec( $ch );
-        curl_close( $ch );
-        // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
+        // PHP 8 releases the handle when its last reference is removed.
         unset( $ch );
 
         $rc_geo_access_api_result = json_decode( $json, true );
@@ -696,8 +722,7 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
         ));
         
         $json = curl_exec( $ch );
-        curl_close( $ch );
-        // For PHP 8+ curl_close no longer has any effect, so `unset` should be used instead
+        // PHP 8 releases the handle when its last reference is removed.
         unset( $ch );
 
         $rc_geo_access_api_result = json_decode( $json, true );

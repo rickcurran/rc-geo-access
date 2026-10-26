@@ -5,7 +5,7 @@ Tags: security, geolocation, login
 Requires at least: 5.0
 Tested up to: 6.6
 Stable tag: 1.49
-Requires PHP: 7.4
+Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,12 @@ Enable the plugin and access the "RC Geo Access" page in the Settings menu in yo
 3. Go to the "RC Geo Access" page in the Settings menu in your WordPress Admin to configure your plugin.
 	
 == Frequently Asked Questions ==
+
+= Does this also restrict XML-RPC and other login methods? =
+
+Yes. The country restriction is checked before WordPress processes credentials through its standard authentication pipeline, including XML-RPC authentication and custom forms using wp_signon() or wp_authenticate(). Application-password authentication, including REST API requests, is also checked. The login page itself remains protected before credentials are processed. Authenticated integrations must connect from an allowed country. Public XML-RPC methods that do not authenticate, such as pingbacks, are not disabled by this change.
+
+These routes share one location check per request, including XML-RPC multicalls. The existing lookup-error policy is unchanged: a recognised geolocation error can still allow access. Plugins implementing their own authentication outside WordPress's hooks are outside this protection.
 	
 = What does this plugin do? =
 
@@ -71,6 +77,14 @@ Yikes, sorry! There is a potential danger of this happening if you have enabled 
 If you are using the OpenLiteSpeed option the IP address of users to your site must be found in the configured Geolocation database in order to establish the user’s country. If the IP address isn't found it will trigger an error message email to be sent which begins with "Sorry, the OpenLiteSpeed GeoIP variables could not be read...". If you receive this error email then you should check that the Geolocation database is configured correctly and also that the database is up to date.
 
 == Changelog ==
+
+= Unreleased =
+
+- Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.
+- Apply country restrictions before credential validation through WordPress authentication, including XML-RPC and custom login forms.
+- Cover application-password authentication, including REST API requests.
+- Reuse the location check within each request to avoid duplicate lookups and notification emails.
+- Return a 403 denial through WordPress's context-appropriate error handler.
 
 = 1.49 =
 
