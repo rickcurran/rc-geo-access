@@ -8,9 +8,14 @@ function add_action( ...$args ) {}
 function add_filter( ...$args ) {}
 function register_activation_hook( ...$args ) {}
 function __( $value, ...$args ) { return $value; }
+require __DIR__ . '/wp-stubs.php';
 require dirname( __DIR__ ) . '/trunk/rc-geo-access.php';
 
 $cases = array(
+    array( 'ipstack', new stdClass(), false ),
+    array( 'ipstack', array( 'success' => 'false', 'country_code' => 'GB' ), false ),
+    array( 'ipstack', array( 'success' => null, 'country_code' => 'GB' ), false ),
+    array( 'ipgeolocation', array( 'message' => null, 'country_code2' => 'GB' ), false ),
     array( 'ipstack', null, false ),
     array( 'ipstack', false, false ),
     array( 'ipstack', 'unavailable', false ),

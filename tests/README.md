@@ -15,3 +15,15 @@ they do not render the actual HTML, XML-RPC or JSON response. Missing, empty, ma
 deny access. Country names are optional, and repeated denials must not send
 duplicate error emails. Provider response validation is covered separately by
 `php tests/geolocation.php`.
+
+Run `php tests/security.php` for settings validation/rendering, HTTP safeguards,
+cache expiry, provider backoff, request budgets and notification throttling.
+Run `php tests/proxy.php` for direct-IP, spoofed header, trusted IPv4/IPv6 chain,
+Cloudflare header and local-GeoIP mismatch scenarios. Shared offline substitutes
+are in `tests/wp-stubs.php`; no live provider or mail service is contacted.
+
+Live server checks remain necessary: compare the settings page's visitor IP
+with your current public IP, verify a known excluded-country request, and check
+OpenLiteSpeed's trusted-proxy configuration if a proxy is present. Test the
+actual HTML, XML-RPC and JSON responses with WordPress/Wordfence on a staging
+site. These scripts do not certify a live server configuration.

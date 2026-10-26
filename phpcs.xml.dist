@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ruleset name="RC Geo Access">
+    <description>WordPress coding standards for the current plugin source.</description>
+    <file>trunk</file>
+    <exclude-pattern>*/tags/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <rule ref="WordPress"/>
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="rc-geo-access"/>
+            </property>
+        </properties>
+    </rule>
+    <rule ref="WordPress.Security.ValidatedSanitizedInput">
+        <properties>
+            <property name="customUnslashingSanitizingFunctions" type="array">
+                <element value="rc_geo_access_validate_ip_header"/>
+                <element value="rc_geo_access_validate_server_country"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

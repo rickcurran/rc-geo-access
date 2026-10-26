@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Validate saved settings and escape dynamic settings-page and notification output. Show visitor-IP diagnostics and configuration errors.
+- Use WordPress HTTP requests with verified HTTPS, bounded timeouts, no redirects and response validation. Keep the existing IPStack endpoint and credentials.
+- Cache external lookups, back off after provider failures, limit uncached lookup traffic, and throttle restriction/error notification emails separately.
+- Add opt-in trusted-proxy and Cloudflare IP handling with IPv4/IPv6 CIDRs. Deny local GeoIP when a proxy-resolved visitor IP cannot be matched safely to the server lookup.
+
 - Deny login access when geolocation cannot identify a recognised country, including missing OpenLiteSpeed variables and provider errors. Country names are optional.
 
 - Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.

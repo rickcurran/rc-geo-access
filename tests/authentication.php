@@ -16,7 +16,7 @@ $cases = array(
     'missing-name-allowed', 'empty-name-allowed', 'quoted-name-allowed',
     'lowercase-code-allowed', 'missing-marker-allowed', 'missing-code-no-email',
     'missing-code-errors-only', 'disabled-missing-geoip', 'missing-provider',
-    'missing-api-key', 'invalid-whitelist', 'no-saved-settings',
+    'missing-api-key', 'invalid-whitelist', 'no-saved-settings', 'escaped-notification',
 );
 
 if ( ! isset( $argv[1] ) ) {
@@ -101,6 +101,7 @@ function authenticate_candidate() {
     return apply_filters( 'authenticate', null, 'test-user', 'test-password' );
 }
 
+require __DIR__ . '/wp-stubs.php';
 require dirname( __DIR__ ) . '/trunk/rc-geo-access.php';
 
 // Model core's priority-20 authentication stage. A denial must terminate before
@@ -140,7 +141,9 @@ if ( $case === 'missing-api-key' ) { $options['rc_geo_access_api_provider'] = 'i
 if ( $case === 'invalid-whitelist' ) { $options['rc_geo_access_restricted_countries'] = 'GB'; }
 if ( $case === 'no-saved-settings' ) { $options = false; }
 
-$expected_block = in_array( $case, $unknown_cases, true ) || in_array( $case, array( 'page-get-blocked', 'page-post-blocked', 'xmlrpc-blocked', 'custom-form-blocked', 'application-password-blocked', 'errors-only-no-restriction-email', 'missing-name-blocked', 'invalid-whitelist' ), true );
+if ( $case === 'escaped-notification' ) { $_SERVER['HTTP_REFERER'] = '<script>alert(1)</script>'; $_SERVER['GEOIP_COUNTRY_NAME'] = '<img src=x onerror=alert(1)>'; }
+
+$expected_block = in_array( $case, $unknown_cases, true ) || in_array( $case, array( 'page-get-blocked', 'page-post-blocked', 'xmlrpc-blocked', 'custom-form-blocked', 'application-password-blocked', 'errors-only-no-restriction-email', 'missing-name-blocked', 'invalid-whitelist', 'escaped-notification' ), true );
 $blocked = false;
 try {
     if ( strpos( $case, 'page-' ) === 0 ) {
@@ -172,6 +175,7 @@ try {
     check( $password_checks === 0, 'Blocked request reached password validation' );
     $expected_emails = in_array( $case, array( 'errors-only-no-restriction-email', 'missing-code-no-email' ), true ) ? 0 : 1;
     check( count( $emails ) === $expected_emails, 'Unexpected restriction email count' );
+    if ( $case === 'escaped-notification' ) { check( strpos( $emails[0][2], '<script>' ) === false && strpos( $emails[0][2], '<img' ) === false && strpos( $emails[0][2], '&lt;img' ) !== false, 'Notification HTML injection' ); }
     if ( $case === 'error-notification-once' ) {
         try { authenticate_candidate(); check( false, 'Cached denial was bypassed' ); }
         catch ( GeoAccessBlocked $again ) { check( count( $emails ) === 1, 'Lookup-error notifications duplicated' ); }
