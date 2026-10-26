@@ -1,4 +1,31 @@
-# Changelog 
+# Changelog
+
+## 1.50
+
+- Resolve Plugin Check warnings by validating and unslashing server variables explicitly and matching the readme title to the plugin name.
+
+- Restore green highlighting for selected countries and responsive multiple-column layout on the settings page.
+
+- Apply WordPress coding standards, add PHPDoc and direct-access guards, and align plugin headers with the declared requirements.
+- Use the rc-geo-access translation domain, translate settings and notification text, and validate server metadata before display or IP resolution.
+- Match plugin-row links against the exact plugin basename and remove obsolete development code.
+
+- Validate saved settings and escape dynamic settings-page and notification output. Show visitor-IP diagnostics and configuration errors.
+- Use WordPress HTTP requests with verified HTTPS, bounded timeouts, no redirects and response validation. Keep the existing IPStack endpoint and credentials.
+- Cache external lookups, back off after provider failures, limit uncached lookup traffic, and throttle restriction/error notification emails separately.
+- Add opt-in trusted-proxy and Cloudflare IP handling with IPv4/IPv6 CIDRs. Deny local GeoIP when a proxy-resolved visitor IP cannot be matched safely to the server lookup.
+
+- Deny login access when geolocation cannot identify a recognised country, including missing OpenLiteSpeed variables and provider errors. Country names are optional.
+
+- Require PHP 8.0 or later and remove curl_close() calls deprecated in PHP 8.5.
+- Apply country restrictions before credential validation through WordPress authentication, including XML-RPC and custom login forms.
+- Cover application-password authentication, including REST API requests.
+- Reuse the location check within each request to avoid duplicate lookups and notification emails.
+- Return a 403 denial through WordPress's context-appropriate error handler.
+
+## 1.49
+
+- Added support for OpenLiteSpeed web server’s local Geolocation functionality, this removes the need for an external third-party geolocation API if you are serving websites using OLS. See more details about how to configure this in OLS here: https://docs.openlitespeed.org/config/advanced/geolocation/#enabling-geolocation
 
 ## 1.48
 

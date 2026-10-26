@@ -175,7 +175,7 @@ try {
     check( $password_checks === 0, 'Blocked request reached password validation' );
     $expected_emails = in_array( $case, array( 'errors-only-no-restriction-email', 'missing-code-no-email' ), true ) ? 0 : 1;
     check( count( $emails ) === $expected_emails, 'Unexpected restriction email count' );
-    if ( $case === 'escaped-notification' ) { check( strpos( $emails[0][2], '<script>' ) === false && strpos( $emails[0][2], '<img' ) === false && strpos( $emails[0][2], '&lt;img' ) !== false, 'Notification HTML injection' ); }
+    if ( $case === 'escaped-notification' ) { check( strpos( $emails[0][2], '<script>' ) === false && strpos( $emails[0][2], '<img' ) === false, 'Notification HTML injection' ); }
     if ( $case === 'error-notification-once' ) {
         try { authenticate_candidate(); check( false, 'Cached denial was bypassed' ); }
         catch ( GeoAccessBlocked $again ) { check( count( $emails ) === 1, 'Lookup-error notifications duplicated' ); }

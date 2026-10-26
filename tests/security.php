@@ -24,8 +24,26 @@ function reset_http() {
     $GLOBALS['test_http_calls'] = $GLOBALS['test_transients'] = array();
     $GLOBALS['test_http_response'] = array( 'response' => array( 'code' => 200 ), 'body' => '{"country_code":"GB","country_code2":"GB","country_name":"United Kingdom"}' );
 }
+$basename = plugin_basename( dirname( __DIR__ ) . '/trunk/rc-geo-access.php' );
+expect( count( rc_geo_access_row_meta( array(), $basename ) ) === 2, 'Plugin row links missing for the exact basename' );
+expect( rc_geo_access_row_meta( array(), 'different-plugin/rc-geo-access.php' ) === array(), 'Links added to an unrelated plugin' );
+foreach ( array( '203\\.0.113.7', '<b>203.0.113.7</b>', "'203.0.113.7'", array( '203.0.113.7' ) ) as $bad_ip ) {
+    expect( rc_geo_access_validate_ip_header( $bad_ip ) === '', 'Malformed address was repaired into a valid IP' );
+}
+expect( rc_geo_access_validate_server_country( 'G\\B' ) === '', 'Malformed country was repaired into a valid code' );
 $options = false;
 $_SERVER = array( 'REMOTE_ADDR' => '203.0.113.7' );
+$server_snapshot = $_SERVER;
+// Model wp_magic_quotes(), which adds slashes to server variables on bootstrap.
+$_SERVER['REMOTE_ADDR'] = addslashes( '203\\.0.113.7' );
+expect( rc_geo_access_connection_ip() === '', 'A malformed WordPress-slashed connection IP was repaired' );
+$_SERVER['GEOIP_COUNTRY_CODE'] = addslashes( 'G\\B' );
+expect( rc_geo_access_server_country() === '', 'A malformed WordPress-slashed country was repaired' );
+$_SERVER['GEOIP_COUNTRY_CODE'] = addslashes( '<b>GB</b>' );
+expect( rc_geo_access_server_country() === '', 'Country markup was stripped into an allowed code' );
+$_SERVER['GEOIP_COUNTRY_CODE'] = addslashes( ' gb ' );
+expect( rc_geo_access_server_country() === 'GB', 'Valid WordPress-slashed country was rejected' );
+$_SERVER = $server_snapshot;
 rc_geo_access_settings_init();
 expect( $registration[2]['sanitize_callback'] === 'rc_geo_access_sanitize_settings', 'Settings callback not registered' );
 foreach ( array( 'rc_geo_access_email_recipient_render', 'rc_geo_access_email_notification_type_render', 'rc_geo_access_api_provider_render', 'rc_geo_access_status_render', 'rc_geo_access_ipstack_api_key_render', 'rc_geo_access_ipgeolocation_api_key_render', 'rc_geo_access_openlitespeed_local_geoip_render', 'rc_geo_access_restricted_countries_render', 'rc_geo_access_connection_render' ) as $renderer ) {

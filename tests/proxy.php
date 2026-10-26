@@ -1,6 +1,6 @@
 <?php
 /* Each process has independent trusted-proxy/header configuration. */
-$cases = array( 'direct', 'spoofed-headers', 'cloudflare', 'cloudflare-external', 'cloudflare-missing', 'cloudflare-list', 'xff', 'xff-spoofed-left', 'xff-trusted-chain', 'xff-invalid', 'xff-only-proxies', 'ipv6', 'bad-peer', 'bad-range', 'bad-header', 'local-geoip-mismatch', 'server-restored', 'real-ip' );
+$cases = array( 'direct', 'spoofed-headers', 'cloudflare', 'cloudflare-external', 'cloudflare-missing', 'cloudflare-list', 'cloudflare-backslash', 'xff', 'xff-spoofed-left', 'xff-trusted-chain', 'xff-invalid', 'xff-only-proxies', 'ipv6', 'bad-peer', 'bad-range', 'bad-header', 'local-geoip-mismatch', 'server-restored', 'real-ip' );
 if ( ! isset( $argv[1] ) ) {
     foreach ( $cases as $case ) {
         $process = proc_open( array( PHP_BINARY, __FILE__, $case ), array( 1 => STDOUT, 2 => STDERR ), $pipes );
@@ -42,6 +42,7 @@ switch ( $case ) {
         break;
     case 'cloudflare-missing': unset( $_SERVER[ $header ] ); $expected = ''; break;
     case 'cloudflare-list': $_SERVER[ $header ] = '203.0.113.7, 203.0.113.8'; $expected = ''; break;
+    case 'cloudflare-backslash': $_SERVER[ $header ] = addslashes( '203\\.0.113.7' ); $expected = ''; break;
     case 'xff-spoofed-left': $_SERVER[ $header ] = '192.0.2.99, 203.0.113.7'; break;
     case 'xff-trusted-chain': $_SERVER[ $header ] = '203.0.113.7, 198.51.100.5'; break;
     case 'xff-invalid': $_SERVER[ $header ] = 'invalid, 203.0.113.7'; $expected = ''; break;

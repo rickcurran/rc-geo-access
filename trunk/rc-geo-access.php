@@ -7,7 +7,7 @@
  * Plugin Name: RC Geo Access
  * Plugin URI: https://qreate.co.uk/projects/#rcgeoaccess
  * Description: Restrict WordPress login-page access and authentication by country, including XML-RPC and application passwords.
- * Version: 1.49
+ * Version: 1.50
  * Requires at least: 5.0
  * Requires PHP: 8.0
  * Author: Rick Curran
@@ -26,6 +26,26 @@ require_once __DIR__ . '/includes/admin.php';
 
 add_action( 'admin_menu', 'rc_geo_access_add_admin_menu' );
 add_action( 'admin_init', 'rc_geo_access_settings_init' );
+add_action( 'admin_enqueue_scripts', 'rc_geo_access_admin_styles' );
+
+/**
+ * Load the country allowlist styles only on this plugin's settings page.
+ *
+ * @param string $hook_suffix The current administration page hook.
+ *
+ * @return void
+ */
+function rc_geo_access_admin_styles( $hook_suffix ) {
+	if ( 'settings_page_rc_geo_access' !== $hook_suffix ) {
+		return;
+	}
+	wp_enqueue_style(
+		'rc-geo-access-admin',
+		plugins_url( 'assets/admin.css', __FILE__ ),
+		array(),
+		(string) filemtime( __DIR__ . '/assets/admin.css' )
+	);
+}
 
 /**
  * Register the settings page under the WordPress Settings menu.
@@ -227,10 +247,10 @@ function rc_geo_access_restricted_countries_render() {
 	if ( '' !== $country ) {
 		echo '<p>' . esc_html__( 'Your detected country:', 'rc-geo-access' ) . ' <strong>' . esc_html( $country ) . '</strong>. ' . esc_html__( 'It is selected below for your convenience; review the selection before saving.', 'rc-geo-access' ) . '</p>';
 	}
-	echo '<ul style="column-width:300px">';
+	echo '<ul class="rc-geo-access-countries">';
 	foreach ( rc_geo_access_get_countries() as $name => $code ) {
 		$selected = in_array( $code, $options['rc_geo_access_restricted_countries'], true ) || $code === $country;
-		echo '<li><label><input type="checkbox" name="rc_geo_access_settings[rc_geo_access_restricted_countries][]" value="' . esc_attr( $code ) . '"' . checked( $selected, true, false ) . '> ' . esc_html( $name . ' - ' . $code ) . '</label></li>';
+		echo '<li class="rc-geo-access-country"><label><input type="checkbox" name="rc_geo_access_settings[rc_geo_access_restricted_countries][]" value="' . esc_attr( $code ) . '"' . checked( $selected, true, false ) . '> ' . esc_html( $name . ' - ' . $code ) . '</label></li>';
 	}
 	echo '</ul>';
 }
@@ -296,7 +316,7 @@ function rc_geo_access_options_page() {
 	<div id="welcome-panel" class="welcome-panel">
 		<div class="welcome-panel-content">
 			<div class="welcome-panel-column-container">
-				<form action='options.php' method='post'>
+				<form class="rc-geo-access-settings-form" action='options.php' method='post'>
 
 					<h1><?php echo esc_html__( 'RC Geo Access Settings', 'rc-geo-access' ); ?></h1>
 
@@ -674,7 +694,7 @@ function rc_geo_access_lookup_ip( $ip, $rc_geo_access_key, $rc_geo_access_provid
 			return rc_geo_access_lookup_error( __( 'A proxy supplied the visitor IP, but the local GeoIP lookup cannot be verified for that address. Configure OpenLiteSpeed to restore the visitor IP before geolocation, or use an external provider.', 'rc-geo-access' ) );
 		}
 		return array(
-			'geoip_country_code' => rc_geo_access_validate_server_country( $_SERVER['GEOIP_COUNTRY_CODE'] ?? '' ),
+			'geoip_country_code' => rc_geo_access_server_country(),
 			'country_name'       => rc_geo_access_server_text( 'GEOIP_COUNTRY_NAME' ),
 			'latitude'           => 0,
 			'longitude'          => 0,

@@ -5,6 +5,13 @@ $GLOBALS['test_transients'] = array();
 $GLOBALS['test_http_calls'] = array();
 $GLOBALS['test_http_response'] = array( 'response' => array( 'code' => 200 ), 'body' => '{"country_code":"GB","country_code2":"GB","country_name":"United Kingdom"}' );
 $GLOBALS['test_settings_errors'] = array();
+if ( ! function_exists( 'wp_unslash' ) ) {
+    function wp_unslash( $value ) { return is_array( $value ) ? array_map( 'wp_unslash', $value ) : stripslashes( $value ); }
+}
+if ( ! function_exists( 'plugin_basename' ) ) {
+    function plugin_basename( $file ) { return 'rc-geo-access/' . basename( $file ); }
+    function is_network_admin() { return false; }
+}
 if ( ! function_exists( 'sanitize_text_field' ) ) {
     function sanitize_text_field( $value ) { return trim( preg_replace( '/[\r\n\t ]+/', ' ', strip_tags( $value ) ) ); }
 }

@@ -1,0 +1,26 @@
+.rc-geo-access-settings-form {
+	width: 100%;
+	min-width: 0;
+}
+
+.rc-geo-access-countries {
+	column-width: 240px;
+	column-gap: 24px;
+	column-rule: 1px dotted #ddd;
+	margin: 0;
+}
+
+.rc-geo-access-country {
+	break-inside: avoid;
+	margin-bottom: 4px;
+}
+
+.rc-geo-access-country label {
+	display: block;
+	padding: 5px 10px 5px 8px;
+	border-radius: 6px;
+}
+
+.rc-geo-access-country:has(input:checked) label {
+	background-color: #c1e1c1;
+}

@@ -27,3 +27,20 @@ with your current public IP, verify a known excluded-country request, and check
 OpenLiteSpeed's trusted-proxy configuration if a proxy is present. Test the
 actual HTML, XML-RPC and JSON responses with WordPress/Wordfence on a staging
 site. These scripts do not certify a live server configuration.
+
+Run `phpcs --standard=phpcs.xml.dist` from the repository root for the full
+WordPress coding standards checks. PHP_CodeSniffer and the WordPress Coding
+Standards ruleset must be installed. The repository ruleset targets `trunk`
+and excludes historical tags and the offline test substitutes. It checks the
+`rc-geo-access` translation domain. Server-variable reads use built-in validation
+and wp_unslash() explicitly, so Plugin Check can recognise them without custom
+PHPCS configuration. No security sniff is disabled. Tests model WordPress
+bootstrap slashing and verify that malformed addresses and country codes remain
+invalid after unslashing; text sanitization cannot repair them into allowed values.
+
+Use `phpcbf --standard=phpcs.xml.dist` for automatic formatting, review its diff,
+and rerun the regression scripts after any fixes. Before publishing, run the
+WordPress Plugin Check plugin on a staging installation and complete the live
+checks described above. PHPCS does not replace Plugin Check or runtime testing.
+Assign the release version in the plugin header, readmes and stable tag as part
+of publication; development changes are recorded under Unreleased until then.

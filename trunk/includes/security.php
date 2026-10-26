@@ -171,7 +171,6 @@ function rc_geo_access_validate_ip_header( $value ) {
 	if ( ! is_string( $value ) || strlen( $value ) > 2048 || false !== strpbrk( $value, "\\\"'" ) ) {
 		return '';
 	}
-	$value = wp_unslash( $value );
 	$chain = array_map( 'trim', explode( ',', $value ) );
 	foreach ( $chain as $address ) {
 		if ( ! filter_var( $address, FILTER_VALIDATE_IP ) ) {
@@ -187,8 +186,11 @@ function rc_geo_access_validate_ip_header( $value ) {
  * @return string The validated address, or an empty string.
  */
 function rc_geo_access_connection_ip() {
-	$ip = rc_geo_access_validate_ip_header( $_SERVER['REMOTE_ADDR'] ?? '' );
-	return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+	if ( ! isset( $_SERVER['REMOTE_ADDR'] ) || ! is_string( $_SERVER['REMOTE_ADDR'] ) ) {
+		return '';
+	}
+	$ip = filter_var( wp_unslash( $_SERVER['REMOTE_ADDR'] ), FILTER_VALIDATE_IP );
+	return is_string( $ip ) ? $ip : '';
 }
 
 /**
@@ -202,7 +204,24 @@ function rc_geo_access_validate_server_country( $value ) {
 	if ( ! is_string( $value ) || false !== strpos( $value, '\\' ) ) {
 		return '';
 	}
-	return rc_geo_access_country_code( array( 'geoip_country_code' => wp_unslash( $value ) ), 'openlitespeed' );
+	return rc_geo_access_country_code( array( 'geoip_country_code' => $value ), 'openlitespeed' );
+}
+
+/**
+ * Read and validate WordPress's slashed local GeoIP country variable.
+ *
+ * @return string A recognised country code, or an empty string.
+ */
+function rc_geo_access_server_country() {
+	if ( ! isset( $_SERVER['GEOIP_COUNTRY_CODE'] ) || ! is_string( $_SERVER['GEOIP_COUNTRY_CODE'] ) ) {
+		return '';
+	}
+	$country = filter_var(
+		wp_unslash( $_SERVER['GEOIP_COUNTRY_CODE'] ),
+		FILTER_VALIDATE_REGEXP,
+		array( 'options' => array( 'regexp' => '/\A\s*[a-zA-Z]{2}\s*\z/D' ) )
+	);
+	return rc_geo_access_validate_server_country( $country );
 }
 
 /**
@@ -236,10 +255,15 @@ function rc_geo_access_client_ip() {
 	if ( ! in_array( $header, array( 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CF_CONNECTING_IP' ), true ) ) {
 		return '';
 	}
-	$value = rc_geo_access_validate_ip_header( $_SERVER[ $header ] ?? '' );
-	if ( ! is_string( $value ) || strlen( $value ) > 2048 ) {
+	if ( ! isset( $_SERVER[ $header ] ) || ! is_string( $_SERVER[ $header ] ) ) {
 		return '';
 	}
+	$value = filter_var(
+		wp_unslash( $_SERVER[ $header ] ),
+		FILTER_VALIDATE_REGEXP,
+		array( 'options' => array( 'regexp' => '/\A[0-9a-fA-F:., \t]{1,2048}\z/D' ) )
+	);
+	$value = rc_geo_access_validate_ip_header( $value );
 	$chain = array_map( 'trim', explode( ',', $value ) );
 	if ( 'HTTP_X_FORWARDED_FOR' !== $header && count( $chain ) !== 1 ) {
 		return '';

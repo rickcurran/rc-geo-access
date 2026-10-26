@@ -14,12 +14,4 @@
             </property>
         </properties>
     </rule>
-    <rule ref="WordPress.Security.ValidatedSanitizedInput">
-        <properties>
-            <property name="customUnslashingSanitizingFunctions" type="array">
-                <element value="rc_geo_access_validate_ip_header"/>
-                <element value="rc_geo_access_validate_server_country"/>
-            </property>
-        </properties>
-    </rule>
 </ruleset>

@@ -1,10 +1,10 @@
-=== RC Geo Access Plugin ===
+=== RC Geo Access ===
 Contributors: rickcurran
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QZEXMAMCYDS3G
 Tags: security, geolocation, login
 Requires at least: 5.0
 Tested up to: 7.1
-Stable tag: 1.49
+Stable tag: 1.50
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,7 +110,15 @@ If you are using the OpenLiteSpeed option the IP address of users to your site m
 
 == Changelog ==
 
-= Unreleased =
+= 1.50 =
+
+- Resolve Plugin Check warnings by validating and unslashing server variables explicitly and matching the readme title to the plugin name.
+
+- Restore green highlighting for selected countries and responsive multiple-column layout on the settings page.
+
+- Apply WordPress coding standards, add PHPDoc and direct-access guards, and align plugin headers with the declared requirements.
+- Use the rc-geo-access translation domain, translate settings and notification text, and validate server metadata before display or IP resolution.
+- Match plugin-row links against the exact plugin basename and remove obsolete development code.
 
 - Validate saved settings and escape dynamic settings-page and notification output. Show visitor-IP diagnostics and configuration errors.
 - Use WordPress HTTP requests with verified HTTPS, bounded timeouts, no redirects and response validation. Keep the existing IPStack endpoint and credentials.
